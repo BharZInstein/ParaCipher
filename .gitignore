@@ -1,0 +1,52 @@
+# ParaCipher
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Hardhat
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+
+# Coverage
+coverage/
+coverage.json
+.coverage_cache/
+.coverage_contracts/
+
+# Deployment artifacts
+deployments/
+deployment-addresses.json
+
+# Misc
+*.tgz
+.cache/
