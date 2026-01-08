@@ -169,7 +169,8 @@ export default function HistoryScreen() {
             <UnifiedHeader
                 title="HISTORY"
                 subtitle="TRANSACTIONS"
-                rightIcon="tune"
+                rightIcon="notifications-none"
+                showNotification
             />
 
             {/* Soft background glows */}

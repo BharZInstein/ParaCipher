@@ -1,10 +1,12 @@
+import TechBackground from '@/components/TechBackground';
+import UnifiedHeader from '@/components/UnifiedHeader';
 import { Typography } from '@/constants/Theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useRef } from 'react';
-import { Animated, Dimensions, PanResponder, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Path, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
@@ -80,34 +82,16 @@ export default function AccidentMatchScreen() {
     });
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Grid Background */}
-            <View style={styles.gridContainer} pointerEvents="none">
-                {Array.from({ length: 10 }).map((_, i) => (
-                    <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 40 }]} />
-                ))}
-                {Array.from({ length: 20 }).map((_, i) => (
-                    <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 40 }]} />
-                ))}
-            </View>
+        <View style={styles.container}>
+            <TechBackground />
 
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-                    <MaterialIcons name="arrow-back" size={20} color="white" />
-                </TouchableOpacity>
-
-                <View style={styles.headerRight}>
-                    <View style={styles.liveBadge}>
-                        <View style={styles.liveDotWrapper}>
-                            <View style={styles.liveDotPing} />
-                            <View style={styles.liveDot} />
-                        </View>
-                        <Text style={styles.liveText}>LIVE</Text>
-                    </View>
-                    <Text style={styles.headerTitle}>DETECTION ACTIVE</Text>
-                </View>
-            </View>
+            <UnifiedHeader
+                title="DETECTION ACTIVE"
+                subtitle="LIVE"
+                showBack
+                onBack={() => router.back()}
+            />
 
             <View style={styles.content}>
 
@@ -240,7 +224,7 @@ export default function AccidentMatchScreen() {
                 </View>
 
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -248,84 +232,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: EmergencyTheme.background,
-    },
-    gridContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.1,
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        top: 0, bottom: 0,
-        width: 1,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        left: 0, right: 0,
-        height: 1,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingTop: 12,
-        marginBottom: 24,
-    },
-    backBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: EmergencyTheme.surfaceBorder,
-        backgroundColor: EmergencyTheme.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerRight: {
-        alignItems: 'flex-end',
-    },
-    liveBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 4,
-    },
-    liveDotWrapper: {
-        position: 'relative',
-        width: 8,
-        height: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    liveDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 4,
-        backgroundColor: '#22c55e', // Green-500
-    },
-    liveDotPing: {
-        position: 'absolute',
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#22c55e',
-        opacity: 0.5,
-        transform: [{ scale: 1.5 }],
-        // Need reanimated/animated loop for actual ping, simulated with static opacity layer for now
-    },
-    liveText: {
-        fontSize: 10,
-        fontFamily: Typography.fontFamily.mono,
-        color: '#22c55e',
-        letterSpacing: 1,
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: 'white',
-        letterSpacing: -0.5,
     },
     content: {
         flex: 1,

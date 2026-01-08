@@ -1,43 +1,231 @@
 import { Colors, Typography } from '@/constants/Theme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, Image, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { useRootNavigationState, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, Dimensions, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
+// Enhanced Loading Component with animations
+const LoadingScreen = () => {
+    const scale = useSharedValue(1);
+    const opacity = useSharedValue(0.5);
+    const rotation = useSharedValue(0);
+    const progressWidth = useSharedValue(0);
+    const scanLineY = useSharedValue(-20);
+
+    useEffect(() => {
+        // Pulsing Icon
+        scale.value = withRepeat(
+            withSequence(
+                withTiming(1.15, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+                withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1,
+            true
+        );
+        opacity.value = withRepeat(
+            withSequence(
+                withTiming(1, { duration: 800 }),
+                withTiming(0.6, { duration: 800 })
+            ),
+            -1,
+            true
+        );
+        // Rotating Ring
+        rotation.value = withRepeat(
+            withTiming(360, { duration: 3000, easing: Easing.linear }),
+            -1,
+            false
+        );
+        // Progress Bar
+        progressWidth.value = withTiming(100, { duration: 2500, easing: Easing.out(Easing.quad) });
+        // Scanning Line
+        scanLineY.value = withRepeat(
+            withSequence(
+                withTiming(60, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+                withTiming(-20, { duration: 0 })
+            ),
+            -1,
+            false
+        );
+    }, []);
+
+    const animatedIconStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+        opacity: opacity.value,
+    }));
+
+    const animatedRingStyle = useAnimatedStyle(() => ({
+        transform: [{ rotate: `${rotation.value}deg` }],
+    }));
+
+    const animatedProgressStyle = useAnimatedStyle(() => ({
+        width: `${progressWidth.value}%`,
+    }));
+
+    const animatedScanStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: scanLineY.value }],
+        opacity: 0.6,
+    }));
+
+    return (
+        <View style={styles.container}>
+            {/* Tech Grid Background */}
+            <View style={styles.gridBackground}>
+                {[...Array(6)].map((_, i) => (
+                    <View key={`v-${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 16.66}%` }]} />
+                ))}
+                {[...Array(10)].map((_, i) => (
+                    <View key={`h-${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 10}%` }]} />
+                ))}
+            </View>
+
+            <View style={styles.loadingContainer}>
+                {/* Outer Rotating Ring */}
+                <View style={styles.ringContainer}>
+                    <Animated.View style={[styles.rotatingRing, animatedRingStyle]}>
+                        <View style={styles.ringSegment} />
+                        <View style={[styles.ringSegment, { transform: [{ rotate: '120deg' }] }]} />
+                        <View style={[styles.ringSegment, { transform: [{ rotate: '240deg' }] }]} />
+                    </Animated.View>
+
+                    {/* Pulsing Lock Icon */}
+                    <Animated.View style={[styles.loadingIconContainer, animatedIconStyle]}>
+                        <MaterialIcons name="lock" size={36} color={Colors.primary} />
+                    </Animated.View>
+                </View>
+
+                {/* App Name */}
+                <View style={styles.loadingTitleContainer}>
+                    <Animated.View style={[styles.scanLine, animatedScanStyle]} />
+                    <Text style={styles.loadingAppName}>
+                        PARA<Text style={{ color: Colors.primary }}>CIPHER</Text>
+                    </Text>
+                </View>
+
+                {/* Status Messages */}
+                <View style={styles.statusContainer}>
+                    <Animated.Text entering={FadeIn.delay(200)} style={styles.loadingStatus}>
+                        &gt; INITIALIZING_SECURE_ENVIRONMENT
+                    </Animated.Text>
+                    <Animated.Text entering={FadeIn.delay(600)} style={styles.loadingStatus}>
+                        &gt; VERIFYING_ENCRYPTION_KEYS
+                    </Animated.Text>
+                    <Animated.Text entering={FadeIn.delay(1000)} style={styles.loadingStatusActive}>
+                        &gt; CONNECTING_TO_BLOCKCHAIN...
+                    </Animated.Text>
+                </View>
+
+                {/* Progress Bar */}
+                <View style={styles.progressContainer}>
+                    <View style={styles.progressTrack}>
+                        <Animated.View style={[styles.progressBar, animatedProgressStyle]} />
+                    </View>
+                    <Text style={styles.progressText}>LOADING SMART WALLET</Text>
+                </View>
+            </View>
+
+            {/* Bottom Decoration */}
+            <View style={styles.bottomDecor}>
+                <View style={styles.decorLine} />
+                <Text style={styles.decorText}>SECURED BY ETHEREUM</Text>
+                <View style={styles.decorLine} />
+            </View>
+        </View>
+    );
+};
+
 export default function LoginScreen() {
     const router = useRouter();
+    const rootNavigationState = useRootNavigationState();
+    const insets = useSafeAreaInsets();
     const [isLoading, setIsLoading] = useState(false);
+    const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
-    const handleLogin = () => {
+    useEffect(() => {
+        // Wait for navigation to be ready
+        if (!rootNavigationState?.key) return;
+
+        (async () => {
+            const compatible = await LocalAuthentication.hasHardwareAsync();
+            const enrolled = await LocalAuthentication.isEnrolledAsync();
+            const hasBio = compatible && enrolled;
+
+            setIsBiometricSupported(hasBio);
+
+            // Check Settings
+            let isAppLockEnabled = true; // Default true
+            try {
+                const savedLock = await AsyncStorage.getItem('isAppLockEnabled');
+                if (savedLock !== null) {
+                    isAppLockEnabled = JSON.parse(savedLock);
+                }
+            } catch (e) {
+                console.warn('Failed to read settings');
+            }
+
+            // Only lock if bio is available AND enabled in settings
+            if (hasBio && isAppLockEnabled) {
+                setIsLocked(true);
+                // Auto-prompt after a short delay
+                setTimeout(() => {
+                    handleBiometricAuth(true);
+                }, 500);
+            }
+        })();
+    }, [rootNavigationState?.key]);
+
+    const handleBiometricAuth = async (isAuto = false) => {
+        try {
+            const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Unlock ParaCipher',
+                fallbackLabel: 'Use Passcode',
+                disableDeviceFallback: false,
+                cancelLabel: 'Cancel',
+            });
+
+            if (result.success) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                handleLogin(true);
+            } else {
+                if (!isAuto) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            if (!isAuto) Alert.alert('Error', 'Biometric authentication failed.');
+        }
+    };
+
+    const handleLogin = (immediate = false) => {
         setIsLoading(true);
+        const delay = immediate ? 1500 : 2500;
+
         setTimeout(() => {
             setIsLoading(false);
             router.replace('/(tabs)');
-        }, 2500);
+        }, delay);
+    };
+
+    const handleReset = () => {
+        setIsLocked(false);
     };
 
     if (isLoading) {
-        return (
-            <View style={styles.container}>
-                <View style={styles.loadingContainer}>
-                    <View style={styles.loadingIconContainer}>
-                        <MaterialIcons name="lock" size={32} color={Colors.primary} />
-                    </View>
-                    <Text style={styles.loadingTitle}>
-                        INITIALIZING <Text style={{ fontWeight: '700' }}>SMART WALLET</Text>
-                    </Text>
-                    <Text style={styles.loadingStatus}>&gt; SECURING_SHIFT _</Text>
-                </View>
-            </View>
-        );
+        return <LoadingScreen />;
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="light-content" />
 
             {/* Header */}
@@ -88,38 +276,67 @@ export default function LoginScreen() {
                     </View>
                 </View>
 
-                {/* Feature Grid */}
-                <View style={styles.gridContainer}>
-                    <View style={styles.gridItem}>
-                        <Text style={styles.gridLabel}>GAS_FEES</Text>
-                        <Text style={styles.gridValue}>NONE</Text>
+                {/* Feature Grid - Only show if NOT locked (Setup Mode) */}
+                {!isLocked && (
+                    <View style={styles.gridContainer}>
+                        <View style={styles.gridItem}>
+                            <Text style={styles.gridLabel}>GAS_FEES</Text>
+                            <Text style={styles.gridValue}>NONE</Text>
+                        </View>
+                        <View style={[styles.gridItem, { borderLeftWidth: 1, borderColor: Colors.gridLine }]}>
+                            <Text style={styles.gridLabel}>SETUP</Text>
+                            <Text style={styles.gridValue}>INSTANT</Text>
+                        </View>
+                        <View style={[styles.gridItem, styles.gridFullWidth]}>
+                            <Text style={styles.gridLabel}>SECURITY</Text>
+                            <Text style={styles.gridValue}>NON-CUSTODIAL // NO SEED PHRASE</Text>
+                        </View>
                     </View>
-                    <View style={[styles.gridItem, { borderLeftWidth: 1, borderColor: Colors.gridLine }]}>
-                        <Text style={styles.gridLabel}>SETUP</Text>
-                        <Text style={styles.gridValue}>INSTANT</Text>
+                )}
+
+                {/* Locked Message */}
+                {isLocked && (
+                    <View style={styles.lockedMessageContainer}>
+                        <Text style={styles.lockedMessage}>APP LOCKED · AUTHENTICATION REQUIRED</Text>
                     </View>
-                    <View style={[styles.gridItem, styles.gridFullWidth]}>
-                        <Text style={styles.gridLabel}>SECURITY</Text>
-                        <Text style={styles.gridValue}>NON-CUSTODIAL // NO SEED PHRASE</Text>
-                    </View>
-                </View>
+                )}
             </View>
 
             {/* Footer Actions */}
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.btnApple} onPress={handleLogin} activeOpacity={0.8}>
-                    <FontAwesome name="apple" size={20} color="black" />
-                    <Text style={styles.btnAppleText}>CONTINUE WITH APPLE</Text>
-                </TouchableOpacity>
 
-                <TouchableOpacity style={styles.btnGoogle} onPress={handleLogin} activeOpacity={0.8}>
-                    <FontAwesome name="google" size={18} color="white" />
-                    <Text style={styles.btnGoogleText}>CONTINUE WITH GOOGLE</Text>
-                </TouchableOpacity>
+                {/* APP LOCK STATE */}
+                {isLocked && (
+                    <>
+                        <TouchableOpacity style={styles.btnBiometric} onPress={() => handleBiometricAuth(false)} activeOpacity={0.8}>
+                            <MaterialIcons name="fingerprint" size={24} color={Colors.primary} />
+                            <Text style={styles.btnBiometricText}>UNLOCK APP</Text>
+                        </TouchableOpacity>
 
-                <TouchableOpacity style={styles.btnPhone} onPress={handleLogin}>
-                    <Text style={styles.btnPhoneText}>[ USE PHONE NUMBER ]</Text>
-                </TouchableOpacity>
+                        <TouchableOpacity style={styles.btnReset} onPress={handleReset}>
+                            <Text style={styles.btnResetText}>[ SWITCH WALLET / RESET ]</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
+
+                {/* SETUP STATE */}
+                {!isLocked && (
+                    <>
+                        <TouchableOpacity style={styles.btnApple} onPress={() => handleLogin(false)} activeOpacity={0.8}>
+                            <FontAwesome name="apple" size={20} color="black" />
+                            <Text style={styles.btnAppleText}>CONNECT WITH APPLE</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnGoogle} onPress={() => handleLogin(false)} activeOpacity={0.8}>
+                            <FontAwesome name="google" size={18} color="white" />
+                            <Text style={styles.btnGoogleText}>CONNECT WITH GOOGLE</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnPhone} onPress={() => handleLogin(false)}>
+                            <Text style={styles.btnPhoneText}>[ USE PHONE NUMBER ]</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
 
                 <View style={styles.legalContainer}>
                     <Text style={styles.legalText}>
@@ -128,7 +345,7 @@ export default function LoginScreen() {
                 </View>
             </View>
 
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -151,7 +368,7 @@ const styles = StyleSheet.create({
         borderColor: Colors.gridLine,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 24,
+        // marginBottom removed as it's handled by parent ringContainer
         backgroundColor: Colors.surfaceHighlight,
     },
     loadingTitle: {
@@ -163,8 +380,128 @@ const styles = StyleSheet.create({
     },
     loadingStatus: {
         fontFamily: Typography.fontFamily.mono,
+        color: Colors.gray400,
+        fontSize: 10,
+        marginTop: 4,
+    },
+    loadingStatusActive: {
+        fontFamily: Typography.fontFamily.mono,
         color: Colors.primary,
-        fontSize: 12,
+        fontSize: 10,
+        marginTop: 4,
+    },
+    gridBackground: {
+        ...StyleSheet.absoluteFillObject,
+        opacity: 0.15,
+    },
+    gridLineV: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        width: 1,
+        backgroundColor: Colors.gridLine,
+    },
+    gridLineH: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        height: 1,
+        backgroundColor: Colors.gridLine,
+    },
+    ringContainer: {
+        width: 120,
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    rotatingRing: {
+        position: 'absolute',
+        width: 120,
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    ringSegment: {
+        position: 'absolute',
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: 'transparent',
+        borderTopColor: Colors.primary,
+    },
+    loadingTitleContainer: {
+        position: 'relative',
+        marginBottom: 24,
+        overflow: 'hidden',
+    },
+    loadingAppName: {
+        fontFamily: Typography.fontFamily.displayBold,
+        color: 'white',
+        fontSize: 28,
+        letterSpacing: 4,
+    },
+    statusContainer: {
+        alignItems: 'flex-start',
+        marginBottom: 32,
+        paddingHorizontal: 24,
+    },
+    progressContainer: {
+        width: '80%',
+        alignItems: 'center',
+    },
+    progressTrack: {
+        width: '100%',
+        height: 4,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressBar: {
+        height: '100%',
+        backgroundColor: Colors.primary,
+        borderRadius: 2,
+    },
+    progressText: {
+        fontFamily: Typography.fontFamily.mono,
+        color: Colors.gray500,
+        fontSize: 9,
+        letterSpacing: 2,
+        marginTop: 12,
+    },
+    bottomDecor: {
+        position: 'absolute',
+        bottom: 40,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    decorLine: {
+        width: 40,
+        height: 1,
+        backgroundColor: Colors.gridLine,
+    },
+    decorText: {
+        fontFamily: Typography.fontFamily.mono,
+        color: Colors.gray600,
+        fontSize: 8,
+        letterSpacing: 2,
+    },
+    scanLine: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        height: 2,
+        backgroundColor: Colors.primary,
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 10,
     },
     header: {
         flexDirection: 'row',
@@ -207,7 +544,7 @@ const styles = StyleSheet.create({
         top: -20,
         bottom: -20,
         width: 1,
-        height: 100, // Should be adjusted or absolute positioned better
+        height: 100,
     },
     logoSection: {
         marginBottom: 32,
@@ -309,6 +646,23 @@ const styles = StyleSheet.create({
         padding: 24,
         gap: 12,
     },
+    btnBiometric: {
+        height: 56,
+        backgroundColor: 'rgba(39, 228, 114, 0.1)',
+        borderWidth: 1,
+        borderColor: Colors.primary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        marginBottom: 8,
+    },
+    btnBiometricText: {
+        fontFamily: Typography.fontFamily.displayBold,
+        color: Colors.primary,
+        fontSize: 14,
+        letterSpacing: 1,
+    },
     btnApple: {
         height: 56,
         backgroundColor: 'white',
@@ -362,5 +716,28 @@ const styles = StyleSheet.create({
         color: Colors.gray600,
         textAlign: 'center',
         maxWidth: 240,
+    },
+    lockedMessageContainer: {
+        marginTop: 48,
+        alignItems: 'center',
+    },
+    lockedMessage: {
+        fontFamily: Typography.fontFamily.mono,
+        color: Colors.primary,
+        fontSize: 12,
+        letterSpacing: 2,
+        textAlign: 'center',
+    },
+    btnReset: {
+        height: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    btnResetText: {
+        fontFamily: Typography.fontFamily.mono,
+        color: Colors.gray400,
+        fontSize: 11,
+        letterSpacing: 1,
     },
 });

@@ -1,7 +1,9 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
 import { Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React from 'react';
 import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -42,8 +44,11 @@ export default function ProfileScreen() {
             <UnifiedHeader
                 title="SAFETY PASSPORT"
                 subtitle="VERIFIED"
-                showBack
                 rightIcon="settings"
+                onRightPress={() => {
+                    HapticFeedback.light();
+                    router.push('/(tabs)/settings');
+                }}
             />
 
             <Animated.View entering={FadeIn.duration(800)} style={{ flex: 1 }}>
@@ -119,6 +124,27 @@ export default function ProfileScreen() {
                         </View>
                     </View>
 
+                    {/* Stats Cards */}
+                    <View style={styles.statsRow}>
+                        <View style={styles.statsCard}>
+                            <Text style={styles.statsValue}>98%</Text>
+                            <Text style={styles.statsLabel}>Efficiency</Text>
+                        </View>
+                        <View style={styles.statsCard}>
+                            <Text style={styles.statsValue}>4.9</Text>
+                            <Text style={styles.statsLabel}>Rating</Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.editBtn}
+                            onPress={() => {
+                                HapticFeedback.light();
+                                router.push('/profile/edit');
+                            }}
+                        >
+                            <MaterialIcons name="edit" size={20} color="black" />
+                            <Text style={styles.editBtnText}>Edit Details</Text>
+                        </TouchableOpacity>
+                    </View>
                     {/* Stats Grid */}
                     <View style={styles.statsGrid}>
 
@@ -225,7 +251,13 @@ export default function ProfileScreen() {
                     </View>
 
                     {/* Footer Action */}
-                    <TouchableOpacity style={styles.footerBtn}>
+                    <TouchableOpacity
+                        style={styles.footerBtn}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/proof' as any);
+                        }}
+                    >
                         <View style={styles.footerSkew} />
                         <View style={styles.footerContent}>
                             <MaterialIcons name="dataset" size={20} color={ProfileTheme.primary} />
@@ -566,7 +598,10 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     credCard: {
-        width: (width - 48 - 16) / 3, // 3 cols, 48 horz padding, 16 gap total
+        // 3 cols: width = (containerWidth - 2*gap) / 3
+        // containerWidth = screenWidth - 48 (24px padding each side)
+        // 2 gaps between 3 items = 2 * 8 = 16
+        width: Math.floor((width - 48 - 16) / 3),
         aspectRatio: 0.9,
         backgroundColor: ProfileTheme.surface,
         borderWidth: 1,
@@ -645,6 +680,50 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: 'white',
         letterSpacing: 2,
+        textTransform: 'uppercase',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 8, // Reduced gap between cards to give more space
+        marginBottom: 20,
+    },
+    editBtn: {
+        flex: 1.2, // Give button more space than stats cards
+        height: 70,
+        backgroundColor: '#00ff9d',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 4, // Reduce gap between icon and text
+        paddingHorizontal: 4,
+    },
+    editBtnText: {
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 11, // Slightly smaller
+        color: 'black',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5, // Reduced letter spacing
+    },
+    statsCard: {
+        flex: 1,
+        height: 70,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 12,
+        padding: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    statsValue: {
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 16,
+        color: 'white',
+        marginBottom: 4,
+    },
+    statsLabel: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 10,
+        color: '#737373',
         textTransform: 'uppercase',
     },
 });

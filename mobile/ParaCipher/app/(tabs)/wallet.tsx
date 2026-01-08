@@ -1,6 +1,8 @@
 import TechBackground from '@/components/TechBackground';
 import { Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React from 'react';
 import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -18,7 +20,11 @@ const WalletTheme = {
     textGray: "#9ca3af",
 };
 
+import { useWallet } from '@/context/WalletContext';
+
 export default function WalletScreen() {
+    const { isConnected, connectWallet, balance } = useWallet();
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -35,113 +41,152 @@ export default function WalletScreen() {
             {/* Top Glow */}
             <View style={styles.topGlow} pointerEvents="none" />
 
-            <Animated.View entering={FadeIn.duration(800)} style={styles.content}>
-
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-
-                    {/* Status Pill */}
-                    <View style={styles.statusPillContainer}>
-                        <View style={styles.statusPill}>
-                            <View style={styles.pingContainer}>
-                                <View style={styles.pingDot} />
-                                <View style={styles.pingRing} />
-                            </View>
-                            <Text style={styles.statusText}>PROTECTION ACTIVE</Text>
-                        </View>
+            {!isConnected ? (
+                <View style={styles.connectContainer}>
+                    <View style={styles.connectIconBg}>
+                        <MaterialIcons name="account-balance-wallet" size={48} color={WalletTheme.primary} />
                     </View>
+                    <Text style={styles.connectTitle}>Connect Wallet</Text>
+                    <Text style={styles.connectDesc}>Link your crypto wallet to access insurance coverage and claims.</Text>
 
-                    {/* Balance Section */}
-                    <View style={styles.balanceSection}>
-                        <Text style={styles.balanceLabel}>Total Balance</Text>
-                        <View style={styles.balanceRow}>
-                            <Text style={styles.currencySymbol}>$</Text>
-                            <Text style={styles.balanceValue}>1,240.50</Text>
-                        </View>
-
-                        <View style={styles.balanceMetaRow}>
-                            <View style={styles.trendPill}>
-                                <MaterialIcons name="trending-up" size={16} color={WalletTheme.primary} />
-                                <Text style={styles.trendText}>+$12.45</Text>
-                            </View>
-                            <View style={styles.yieldBadge}>
-                                <Text style={styles.yieldText}>+3.5% YIELD</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Top Up Button */}
-                    <TouchableOpacity style={styles.topUpBtn}>
-                        <Text style={styles.topUpText}>Top-Up Wallet</Text>
-                        <View style={styles.arrowCircle}>
-                            <MaterialIcons name="arrow-outward" size={20} color="white" />
-                        </View>
-                        <View style={styles.btnLine} />
+                    <TouchableOpacity
+                        style={styles.connectBtn}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            connectWallet();
+                        }}
+                    >
+                        <Text style={styles.connectBtnText}>CONNECT WALLET</Text>
+                        <MaterialIcons name="arrow-forward" size={20} color="black" />
                     </TouchableOpacity>
+                </View>
+            ) : (
+                <Animated.View entering={FadeIn.duration(800)} style={styles.content}>
 
-                    {/* Activity Log */}
-                    <View style={styles.activitySection}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>ACTIVITY LOG</Text>
-                            <TouchableOpacity style={styles.viewAllBtn}>
-                                <Text style={styles.viewAllText}>VIEW ALL</Text>
-                                <MaterialIcons name="chevron-right" size={16} color="#6b7280" />
-                            </TouchableOpacity>
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+
+                        {/* Status Pill */}
+                        <View style={styles.statusPillContainer}>
+                            <View style={styles.statusPill}>
+                                <View style={styles.pingContainer}>
+                                    <View style={styles.pingDot} />
+                                    <View style={styles.pingRing} />
+                                </View>
+                                <Text style={styles.statusText}>PROTECTION ACTIVE</Text>
+                            </View>
                         </View>
 
-                        <View style={styles.activityList}>
-
-                            {/* Item 1 */}
-                            <View style={styles.activityItem}>
-                                {/* Tech Corners Items */}
-                                <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary }]} />
-                                <View style={[styles.cornerItem, { bottom: 0, right: 0, borderBottomWidth: 1, borderRightWidth: 1, borderColor: WalletTheme.primary }]} />
-
-                                <View style={styles.itemLeft}>
-                                    <View style={styles.iconBox}>
-                                        <MaterialIcons name="shield" size={20} color="#9ca3af" />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.itemTitle}>Uber Eats Gig</Text>
-                                        <Text style={styles.itemSub}>09:41 AM <Text style={{ color: '#333' }}>|</Text> COVERED</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.amountNegative}>-$2.50</Text>
+                        {/* Balance Section */}
+                        <View style={styles.balanceSection}>
+                            <Text style={styles.balanceLabel}>Total Balance</Text>
+                            <View style={styles.balanceRow}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <Text style={styles.balanceValue}>1,240.50</Text>
                             </View>
 
-                            {/* Item 2 */}
-                            <View style={styles.activityItem}>
-                                <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary, opacity: 0.5 }]} />
-                                <View style={styles.itemLeft}>
-                                    <View style={[styles.iconBox, { borderColor: WalletTheme.primary }]}>
-                                        <MaterialIcons name="trending-up" size={20} color={WalletTheme.primary} />
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.itemTitle, { color: 'white' }]}>Yield Earned</Text>
-                                        <Text style={styles.itemSub}>YESTERDAY <Text style={{ color: '#333' }}>|</Text> AUTO</Text>
-                                    </View>
+                            <View style={styles.balanceMetaRow}>
+                                <View style={styles.trendPill}>
+                                    <MaterialIcons name="trending-up" size={16} color={WalletTheme.primary} />
+                                    <Text style={styles.trendText}>+$12.45</Text>
                                 </View>
-                                <Text style={styles.amountPositive}>+$0.85</Text>
+                                <View style={styles.yieldBadge}>
+                                    <Text style={styles.yieldText}>+3.5% YIELD</Text>
+                                </View>
                             </View>
 
-                            {/* Item 3 */}
-                            <View style={[styles.activityItem, { opacity: 0.8 }]}>
-                                <View style={styles.itemLeft}>
-                                    <View style={styles.iconBox}>
-                                        <MaterialIcons name="account-balance" size={20} color="#6b7280" />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.itemTitle}>Bank Transfer</Text>
-                                        <Text style={styles.itemSub}>OCT 24 <Text style={{ color: '#333' }}>|</Text> COMPLETED</Text>
-                                    </View>
-                                </View>
-                                <Text style={[styles.amountPositive, { color: 'white' }]}>+$200.00</Text>
+                            <View style={styles.actionRow}>
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, styles.primaryBtn]}
+                                    onPress={() => {
+                                        HapticFeedback.light();
+                                        router.push('/wallet/deposit');
+                                    }}
+                                >
+                                    <MaterialIcons name="add" size={24} color="black" />
+                                    <Text style={styles.primaryBtnText}>Top Up</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.actionBtn}
+                                    onPress={() => {
+                                        HapticFeedback.light();
+                                        router.push('/wallet/deposit'); // Using deposit for withdraw for now as generic 'Transfer'
+                                    }}
+                                >
+                                    <MaterialIcons name="arrow-outward" size={24} color="white" />
+                                    <Text style={styles.actionBtnText}>Withdraw</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.actionBtn}>
+                                    <MaterialIcons name="swap-horiz" size={24} color="white" />
+                                    <Text style={styles.actionBtnText}>Swap</Text>
+                                </TouchableOpacity>
                             </View>
-
                         </View>
-                    </View>
 
-                </ScrollView>
-            </Animated.View>
+                        {/* Activity Log */}
+                        <View style={styles.activitySection}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>ACTIVITY LOG</Text>
+                                <TouchableOpacity style={styles.viewAllBtn}>
+                                    <Text style={styles.viewAllText}>VIEW ALL</Text>
+                                    <MaterialIcons name="chevron-right" size={16} color="#6b7280" />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.activityList}>
+
+                                {/* Item 1 */}
+                                <View style={styles.activityItem}>
+                                    {/* Tech Corners Items */}
+                                    <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary }]} />
+                                    <View style={[styles.cornerItem, { bottom: 0, right: 0, borderBottomWidth: 1, borderRightWidth: 1, borderColor: WalletTheme.primary }]} />
+
+                                    <View style={styles.itemLeft}>
+                                        <View style={styles.iconBox}>
+                                            <MaterialIcons name="shield" size={20} color="#9ca3af" />
+                                        </View>
+                                        <View>
+                                            <Text style={styles.itemTitle}>Uber Eats Gig</Text>
+                                            <Text style={styles.itemSub}>09:41 AM <Text style={{ color: '#333' }}>|</Text> COVERED</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={styles.amountNegative}>-$2.50</Text>
+                                </View>
+
+                                {/* Item 2 */}
+                                <View style={styles.activityItem}>
+                                    <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary, opacity: 0.5 }]} />
+                                    <View style={styles.itemLeft}>
+                                        <View style={[styles.iconBox, { borderColor: WalletTheme.primary }]}>
+                                            <MaterialIcons name="trending-up" size={20} color={WalletTheme.primary} />
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.itemTitle, { color: 'white' }]}>Yield Earned</Text>
+                                            <Text style={styles.itemSub}>YESTERDAY <Text style={{ color: '#333' }}>|</Text> AUTO</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={styles.amountPositive}>+$0.85</Text>
+                                </View>
+
+                                {/* Item 3 */}
+                                <View style={[styles.activityItem, { opacity: 0.8 }]}>
+                                    <View style={styles.itemLeft}>
+                                        <View style={styles.iconBox}>
+                                            <MaterialIcons name="account-balance" size={20} color="#6b7280" />
+                                        </View>
+                                        <View>
+                                            <Text style={styles.itemTitle}>Bank Transfer</Text>
+                                            <Text style={styles.itemSub}>OCT 24 <Text style={{ color: '#333' }}>|</Text> COMPLETED</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={[styles.amountPositive, { color: 'white' }]}>+$200.00</Text>
+                                </View>
+
+                            </View>
+                        </View>
+
+                    </ScrollView>
+                </Animated.View>
+            )}
         </SafeAreaView>
 
     );
@@ -170,11 +215,59 @@ const styles = StyleSheet.create({
     },
     topGlow: {
         position: 'absolute',
-        top: -150, left: -50,
-        width: 300, height: 300,
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 200,
         backgroundColor: 'rgba(204, 255, 0, 0.05)',
-        borderRadius: 150,
-        zIndex: 0,
+        transform: [{ scaleY: 1.5 }],
+    },
+    connectContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+    },
+    connectIconBg: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(204, 255, 0, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(204, 255, 0, 0.2)',
+    },
+    connectTitle: {
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 24,
+        color: 'white',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    connectDesc: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 14,
+        color: '#9ca3af',
+        textAlign: 'center',
+        marginBottom: 40,
+        lineHeight: 22,
+    },
+    connectBtn: {
+        backgroundColor: WalletTheme.primary,
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    connectBtnText: {
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 14,
+        color: 'black',
+        letterSpacing: 1,
     },
     content: {
         flex: 1,
@@ -448,5 +541,35 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: WalletTheme.primary,
         fontWeight: '500',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 24,
+    },
+    actionBtn: {
+        flex: 1,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    primaryBtn: {
+        backgroundColor: WalletTheme.primary,
+    },
+    actionBtnText: {
+        color: 'white',
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 12,
+        textTransform: 'uppercase',
+    },
+    primaryBtnText: {
+        color: 'black',
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 12,
+        textTransform: 'uppercase',
     },
 });

@@ -1,11 +1,13 @@
+import TechBackground from '@/components/TechBackground';
 import { Colors, Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import TechBackground from '@/components/TechBackground';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -35,7 +37,13 @@ export default function HomeScreen() {
                 <Text style={styles.usernameText}>MITHIL</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.notificationBtn}>
+            <TouchableOpacity
+              style={styles.notificationBtn}
+              onPress={() => {
+                HapticFeedback.light();
+                router.push('/notifications');
+              }}
+            >
               <MaterialIcons name="notifications-none" size={24} color={Colors.gray400} />
               <View style={styles.notificationDot} />
             </TouchableOpacity>
@@ -112,14 +120,14 @@ export default function HomeScreen() {
           <View style={styles.activitySection}>
             <View style={styles.activityHeader}>
               <Text style={styles.activityTitle}>RECENT ACTIVITY</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/history')}>
                 <MaterialIcons name="arrow-forward" size={18} color={Colors.primary} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.activityList}>
               {/* Item 1 */}
-              <TouchableOpacity style={styles.activityItem}>
+              <TouchableOpacity style={styles.activityItem} onPress={() => router.push({ pathname: '/transaction/[id]', params: { id: '123' } })}>
                 <View style={styles.activityLeft}>
                   <View style={styles.activityIconBox}>
                     <MaterialIcons name="security" size={18} color={Colors.gray400} />
@@ -133,7 +141,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
 
               {/* Item 2 */}
-              <TouchableOpacity style={[styles.activityItem, { borderBottomWidth: 0 }]}>
+              <TouchableOpacity style={[styles.activityItem, { borderBottomWidth: 0 }]} onPress={() => router.push({ pathname: '/transaction/[id]', params: { id: '456' } })}>
                 <View style={styles.activityLeft}>
                   <View style={[styles.activityIconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
                     <MaterialIcons name="account-balance-wallet" size={18} color={Colors.primary} />
@@ -482,5 +490,93 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.primary,
+  },
+  walletCard: {
+    backgroundColor: 'rgba(10, 10, 10, 0.8)',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 148, 0.2)',
+    overflow: 'hidden',
+  },
+  walletHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  walletIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 255, 148, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  walletLabel: {
+    fontFamily: Typography.fontFamily.mono,
+    fontSize: 10,
+    color: '#9ca3af',
+    letterSpacing: 2,
+    flex: 1,
+  },
+  walletAmount: {
+    fontFamily: Typography.fontFamily.displayBold,
+    fontSize: 32,
+    color: 'white',
+    letterSpacing: -1,
+    marginBottom: 12,
+  },
+  walletFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trendBadge: {
+    backgroundColor: '#00ff9d',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  trendText: {
+    fontFamily: Typography.fontFamily.mono,
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'black',
+  },
+  walletSub: {
+    fontFamily: Typography.fontFamily.mono,
+    fontSize: 10,
+    color: '#6b7280',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    height: 80,
+    backgroundColor: '#0a0a0a',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    overflow: 'hidden',
+  },
+  actionGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  actionLabel: {
+    fontFamily: Typography.fontFamily.mono,
+    fontSize: 10,
+    color: 'white',
+    marginTop: 8,
+    letterSpacing: 1,
   },
 });

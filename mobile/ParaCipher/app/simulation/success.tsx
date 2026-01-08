@@ -1,8 +1,9 @@
+import TechBackground from '@/components/TechBackground';
 import { Typography } from '@/constants/Theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, SafeAreaView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -41,18 +42,10 @@ export default function PayoutSuccessScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar barStyle="light-content" />
 
-            {/* Grid Background */}
-            <View style={styles.gridContainer} pointerEvents="none">
-                {Array.from({ length: 15 }).map((_, i) => (
-                    <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 30 }]} />
-                ))}
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 30 }]} />
-                ))}
-            </View>
+            <TechBackground />
 
             {/* Top Glow */}
             <View style={styles.topGlow} pointerEvents="none" />
@@ -143,7 +136,7 @@ export default function PayoutSuccessScreen() {
                 </View>
 
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -151,22 +144,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: SuccessTheme.background,
-    },
-    gridContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.15,
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        top: 0, bottom: 0,
-        width: 1,
-        backgroundColor: '#333',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        left: 0, right: 0,
-        height: 1,
-        backgroundColor: '#333',
     },
     topGlow: {
         position: 'absolute',

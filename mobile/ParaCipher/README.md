@@ -1,50 +1,104 @@
-# Welcome to your Expo app 👋
+# ParaCipher 🛡️
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Parametric Insurance for the Gig Economy.**
+ParaCipher is a blockchain-based insurance platform designed for gig workers (Uber, Zomato, Swiggy). It provides instant, automated payouts for accidents using smart contracts and on-device sensor simulation.
 
-## Get started
+Powered by **Ethereum (Polygon)** for transparency and **React Native (Expo)** for a premium mobile experience.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🚀 Key Features
 
-2. Start the app
+### 1. **Instant Coverage**
+- Workers pay a small premium (e.g., ₹25) for 24-hour coverage.
+- Policies are auto-issued via smart contracts.
+- **Visuals:** "Coverage Inactive" vs "Protected" status on Home Screen.
 
-   ```bash
-   npx expo start
-   ```
+### 2. **Accident Simulation & Detection**
+- **Simulation Mode:** Interactive hold-to-simulate crash interface.
+- **Sensor Integration:** Uses device accelerometer (simulated) to detect high-impact events.
+- **Auto-Claim:** Automatically triggers a claim when a crash is detected.
 
-In the output, you'll find options to open the app in a
+### 3. **Smart Wallet**
+- **Built-in Wallet:** View balances, premiums paid, and payouts received.
+- **Dummy Connection:** Simulates connecting to a crypto wallet (e.g., MetaMask).
+- **Yield:** "Earn while you protect" visualization.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 4. **Safety Passport (Profile)**
+- **Reputation Score:** 850-scale safety score based on driving history.
+- **On-Chain Proof:** verifiable proof of insurance and safety record.
+- **Dynamic Pricing:** Safer drivers get lower premiums.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🛠️ Technology Stack
 
-When you're ready, run:
+- **Frontend:** React Native (Expo SDK 52)
+- **Language:** TypeScript
+- **Styling:** Custom StyleSheet (Neon/Dark Cyberpunk aesthetic)
+- **Navigation:** Expo Router (File-based routing)
+- **Animations:** React Native Reanimated 2
+- **State Management:** React Context (Currency, Wallet)
+- **Storage:** Async Storage (Persist settings/wallet state)
 
-```bash
-npm run reset-project
+---
+
+## 🔧 Setup & Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/paracipher.git
+    cd paracipher
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Run the app**
+    ```bash
+    npx expo start
+    ```
+    - Scan the QR code with **Expo Go** on your Android/iOS device.
+    - Or press `a` to run on Android Emulator.
+
+---
+
+## 📱 App Structure
+
+```
+app/
+├── (tabs)/
+│   ├── index.tsx       # Home: Coverage Status & Dashboard
+│   ├── explore.tsx     # Map view (simulation)
+│   ├── wallet.tsx      # Wallet: Balance & Connection
+│   ├── history.tsx     # Claims History
+│   ├── profile.tsx     # Safety Passport & Reputation
+│   └── settings.tsx    # App Config
+├── simulation/
+│   └── accident.tsx    # Crash Simulation Screen
+├── shift/
+│   └── active.tsx      # Active Shift Timer
+└── proof/
+    └── index.tsx       # On-Chain Verification Proof
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 🔗 Smart Contract Integration
 
-To learn more about developing your project with Expo, look at the following resources:
+The app is designed to interface with the following Solidity contracts:
+- **InsurancePolicy.sol:** Manages daily coverage.
+- **ClaimPayout.sol:** Handles claims and payouts.
+- **ReputationScore.sol:** Tracks driver safety scores.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## 🎨 Design System
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Theme:** Dark Mode First (OLED Black #030303)
+- **Accents:** Neon Green (`#00ff9d`), Emergency Red (`#FF3B30`), Cyan (`#00F0FF`)
+- **Typography:** Inter (Body) & JetBrains Mono (Data/Tech)
+

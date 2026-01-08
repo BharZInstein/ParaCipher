@@ -1,3 +1,5 @@
+import TechBackground from '@/components/TechBackground';
+import UnifiedHeader from '@/components/UnifiedHeader';
 import { Typography } from '@/constants/Theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -71,41 +73,17 @@ export default function OracleProcessingScreen() {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" />
 
-            {/* Grid Background */}
-            <View style={styles.gridContainer} pointerEvents="none">
-                {Array.from({ length: 15 }).map((_, i) => (
-                    <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 30 }]} />
-                ))}
-                {Array.from({ length: 30 }).map((_, i) => (
-                    <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 30 }]} />
-                ))}
-            </View>
+            <TechBackground />
 
             {/* Top Glow */}
             <View style={styles.topGlow} pointerEvents="none" />
 
             <View style={styles.content}>
 
-                {/* Drag Handle Indicator */}
-                <View style={styles.dragHandleContainer}>
-                    <View style={styles.dragHandle} />
-                </View>
-
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.liveIndicator}>
-                        <View style={styles.liveDotWrapper}>
-                            <View style={styles.liveDotPing} />
-                            <View style={styles.liveDot} />
-                        </View>
-                        <Text style={styles.liveText}>LIVE ON-CHAIN</Text>
-                    </View>
-
-                    <Text style={styles.titleMain}>
-                        ORACLE{'\n'}
-                        <Text style={styles.titleSub}>PROCESSING</Text>
-                    </Text>
-                </View>
+                <UnifiedHeader
+                    title="ORACLE"
+                    subtitle="PROCESSING"
+                />
 
                 {/* Timeline Section */}
                 <View style={styles.timelineContainer}>
@@ -218,22 +196,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: OracleTheme.background,
     },
-    gridContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.15,
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        top: 0, bottom: 0,
-        width: 1,
-        backgroundColor: '#333',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        left: 0, right: 0,
-        height: 1,
-        backgroundColor: '#333',
-    },
     topGlow: {
         position: 'absolute',
         top: -100, left: 50,
@@ -246,67 +208,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 24,
         paddingTop: 16,
-    },
-    dragHandleContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    dragHandle: {
-        width: 40,
-        height: 4,
-        backgroundColor: '#333',
-        borderRadius: 2,
-    },
-    header: {
-        marginBottom: 40,
-        paddingLeft: 8,
-        borderLeftWidth: 1,
-        borderLeftColor: 'rgba(0, 255, 102, 0.2)',
-    },
-    liveIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 8,
-    },
-    liveDotWrapper: {
-        width: 8,
-        height: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    liveDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: OracleTheme.primary,
-    },
-    liveDotPing: {
-        position: 'absolute',
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: OracleTheme.primary,
-        opacity: 0.5,
-        transform: [{ scale: 1.5 }],
-    },
-    liveText: {
-        fontFamily: Typography.fontFamily.mono,
-        fontSize: 10,
-        color: OracleTheme.primary,
-        letterSpacing: 2,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-    },
-    titleMain: {
-        fontFamily: Typography.fontFamily.displayBold, // Inter
-        fontSize: 40, // 5xl roughly
-        color: 'white',
-        lineHeight: 40,
-        letterSpacing: -1,
-    },
-    titleSub: {
-        color: '#3f3f46', // Zinc-700
     },
     timelineContainer: {
         paddingLeft: 10,

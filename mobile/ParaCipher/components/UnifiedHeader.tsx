@@ -1,7 +1,10 @@
 import { Colors, Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface UnifiedHeaderProps {
     title: string;
@@ -22,12 +25,33 @@ export default function UnifiedHeader({
     onRightPress,
     showNotification = false,
 }: UnifiedHeaderProps) {
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
+
+    const handleBack = () => {
+        HapticFeedback.light();
+        if (onBack) {
+            onBack();
+        } else {
+            router.back();
+        }
+    };
+
+    const handleRightPress = () => {
+        HapticFeedback.light();
+        if (onRightPress) {
+            onRightPress();
+        } else if (rightIcon === 'notifications-none') {
+            router.push('/notifications');
+        }
+    };
+
     return (
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
             {/* Left Section */}
             <View style={styles.leftSection}>
                 {showBack ? (
-                    <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
+                    <TouchableOpacity style={styles.iconBtn} onPress={handleBack}>
                         <MaterialIcons name="arrow-back" size={20} color="rgba(255,255,255,0.8)" />
                     </TouchableOpacity>
                 ) : (
@@ -44,7 +68,7 @@ export default function UnifiedHeader({
             {/* Right Section */}
             <View style={styles.rightSection}>
                 {rightIcon ? (
-                    <TouchableOpacity style={styles.iconBtn} onPress={onRightPress}>
+                    <TouchableOpacity style={styles.iconBtn} onPress={handleRightPress}>
                         <MaterialIcons name={rightIcon} size={20} color="rgba(255,255,255,0.8)" />
                         {showNotification && <View style={styles.notificationDot} />}
                     </TouchableOpacity>
@@ -62,7 +86,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingTop: 48,
         paddingBottom: 16,
         backgroundColor: 'rgba(3, 3, 3, 0.9)',
         borderBottomWidth: 1,

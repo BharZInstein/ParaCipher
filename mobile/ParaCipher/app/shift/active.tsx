@@ -1,11 +1,14 @@
+import TechBackground from '@/components/TechBackground';
+import UnifiedHeader from '@/components/UnifiedHeader';
 import { Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, PanResponder, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Screen Dimensions
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // Local overrides for this specific design
 const ScreenColors = {
@@ -41,6 +44,7 @@ export default function ActiveShiftScreen() {
     const time = formatTime(seconds);
 
     const handleEndShift = () => {
+        HapticFeedback.heavy();
         Alert.alert("End Shift", "Confirm ending shift?", [
             {
                 text: "Cancel", style: "cancel", onPress: () => {
@@ -68,6 +72,7 @@ export default function ActiveShiftScreen() {
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onPanResponderGrant: () => {
+                HapticFeedback.light();
                 pan.setOffset({
                     x: (pan.x as any)._value,
                     y: 0
@@ -98,36 +103,19 @@ export default function ActiveShiftScreen() {
     ).current;
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Simulated Grid Background */}
-            <View style={styles.gridContainer} pointerEvents="none">
-                {/* Vertical Lines */}
-                {Array.from({ length: 10 }).map((_, i) => (
-                    <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 40 }]} />
-                ))}
-                {/* Horizontal Lines */}
-                {Array.from({ length: 20 }).map((_, i) => (
-                    <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 40 }]} />
-                ))}
-            </View>
+        <View style={styles.container}>
+            <TechBackground />
 
+            {/* Top Glow - Modified for this screen */}
             <View style={styles.glowTopRight} pointerEvents="none" />
 
             <View style={styles.content}>
-
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-                        <MaterialIcons name="arrow-back" size={24} color="rgba(255,255,255,0.8)" />
-                    </TouchableOpacity>
-                    <View style={styles.headerCenter}>
-                        <View style={[styles.dot, { backgroundColor: ScreenColors.primary, shadowColor: ScreenColors.primary, shadowRadius: 8, shadowOpacity: 0.8 }]} />
-                        <Text style={styles.headerTitle}>PARACIPHER</Text>
-                    </View>
-                    <View style={styles.iconBtn} pointerEvents="none">
-                        <View style={[styles.dot, { backgroundColor: 'rgba(255,255,255,0.2)' }]} />
-                    </View>
-                </View>
+                <UnifiedHeader
+                    title="PARACIPHER"
+                    subtitle="ACTIVE SHIFT"
+                    showBack
+                    onBack={() => router.back()}
+                />
 
                 {/* Main Display */}
                 <View style={styles.mainSection}>
@@ -248,7 +236,7 @@ export default function ActiveShiftScreen() {
                 </View>
 
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -256,22 +244,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: ScreenColors.background,
-    },
-    gridContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.1,
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        top: 0, bottom: 0,
-        width: 1,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        left: 0, right: 0,
-        height: 1,
-        backgroundColor: 'rgba(255,255,255,0.2)',
     },
     glowTopRight: {
         position: 'absolute',
@@ -283,42 +255,6 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingVertical: 12,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-        marginBottom: 16,
-        paddingTop: 8,
-    },
-    iconBtn: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerCenter: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-    },
-    dot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    headerTitle: {
-        fontFamily: Typography.fontFamily.mono,
-        fontSize: 10,
-        color: 'rgba(255,255,255,0.6)',
-        letterSpacing: 2,
-        fontWeight: '600',
-        textTransform: 'uppercase',
     },
     mainSection: {
         alignItems: 'center',

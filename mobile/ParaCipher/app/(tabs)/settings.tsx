@@ -1,11 +1,14 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
 import { Typography } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -19,30 +22,46 @@ const SettingsTheme = {
     danger: "#ef4444",
 };
 
-const CustomToggle = ({ value, onValueChange }: { value: boolean, onValueChange: (v: boolean) => void }) => (
-    <TouchableOpacity onPress={() => onValueChange(!value)} activeOpacity={0.8}>
-        <View style={[
-            styles.toggleContainer,
-            value ? { backgroundColor: SettingsTheme.primary, borderColor: SettingsTheme.primary }
-                : { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }
-        ]}>
-            <View style={[
-                styles.toggleHandle,
-                value ? { transform: [{ translateX: 14 }], backgroundColor: 'black', borderColor: 'black' }
-                    : { transform: [{ translateX: 0 }], backgroundColor: '#9ca3af', borderColor: '#6b7280' }
-            ]} />
-        </View>
-    </TouchableOpacity>
-);
+import CustomToggle from '@/components/CustomToggle';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const { currency, setCurrencyPreference } = useCurrency();
     const [notifications, setNotifications] = useState(true);
-    const [faceId, setFaceId] = useState(false);
-    const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
+    const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
+
+    useEffect(() => {
+        loadSettings();
+    }, []);
+
+    const loadSettings = async () => {
+        try {
+            const savedLock = await AsyncStorage.getItem('isAppLockEnabled');
+            // Default to true if not set, or parse existing
+            if (savedLock !== null) {
+                setIsAppLockEnabled(JSON.parse(savedLock));
+            } else {
+                setIsAppLockEnabled(true);
+                AsyncStorage.setItem('isAppLockEnabled', 'true');
+            }
+        } catch (e) {
+            console.error('Failed to load settings', e);
+        }
+    };
+
+    const toggleAppLock = async (value: boolean) => {
+        setIsAppLockEnabled(value);
+        try {
+            await AsyncStorage.setItem('isAppLockEnabled', JSON.stringify(value));
+            HapticFeedback.light();
+        } catch (e) {
+            console.error('Failed to save settings', e);
+        }
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
             <StatusBar barStyle="light-content" />
 
             <TechBackground />
@@ -51,8 +70,6 @@ export default function SettingsScreen() {
             <UnifiedHeader
                 title="SETTINGS"
                 subtitle="SYS.CONFIG"
-                showBack
-                onBack={() => router.back()}
             />
 
             <Animated.View entering={FadeIn.duration(800)} style={{ flex: 1 }}>
@@ -103,10 +120,10 @@ export default function SettingsScreen() {
                     <View style={styles.listItem}>
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>02</Text>
-                            <MaterialCommunityIcons name="face-recognition" size={18} color="#9ca3af" />
-                            <Text style={styles.itemLabel}>FACE ID LOGIN</Text>
+                            <MaterialCommunityIcons name="shield-lock-outline" size={18} color="#9ca3af" />
+                            <Text style={styles.itemLabel}>APP LOCK</Text>
                         </View>
-                        <CustomToggle value={faceId} onValueChange={setFaceId} />
+                        <CustomToggle value={isAppLockEnabled} onValueChange={toggleAppLock} />
                         <View style={styles.bottomBorder} />
                     </View>
 
@@ -120,13 +137,19 @@ export default function SettingsScreen() {
                         <View style={styles.currencySelector}>
                             <TouchableOpacity
                                 style={[styles.currencyBtn, currency === 'USD' && styles.currencyBtnActive]}
-                                onPress={() => setCurrency('USD')}
+                                onPress={() => {
+                                    HapticFeedback.light();
+                                    setCurrencyPreference('USD');
+                                }}
                             >
                                 <Text style={[styles.currencyBtnText, currency === 'USD' && styles.currencyBtnTextActive]}>USD</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.currencyBtn, currency === 'INR' && styles.currencyBtnActive]}
-                                onPress={() => setCurrency('INR')}
+                                onPress={() => {
+                                    HapticFeedback.light();
+                                    setCurrencyPreference('INR');
+                                }}
                             >
                                 <Text style={[styles.currencyBtnText, currency === 'INR' && styles.currencyBtnTextActive]}>INR</Text>
                             </TouchableOpacity>
@@ -195,9 +218,41 @@ export default function SettingsScreen() {
                         <View style={styles.bottomBorder} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/security');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>08</Text>
+                            <MaterialIcons name="security" size={18} color="#9ca3af" />
+                            <Text style={styles.itemLabel}>ACCOUNT SECURITY</Text>
+                        </View>
+                        <MaterialIcons name="arrow-forward-ios" size={12} color="#52525b" />
+                        <View style={styles.bottomBorder} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/support');
+                        }}
+                    >
+                        <View style={styles.listItemLeft}>
+                            <Text style={styles.itemIndex}>09</Text>
+                            <MaterialIcons name="help-outline" size={18} color="#9ca3af" />
+                            <Text style={styles.itemLabel}>HELP & SUPPORT</Text>
+                        </View>
+                        <MaterialIcons name="arrow-forward-ios" size={12} color="#52525b" />
+                        <View style={styles.bottomBorder} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                        <View style={styles.listItemLeft}>
+                            <Text style={styles.itemIndex}>10</Text>
                             <MaterialIcons name="gavel" size={18} color="#9ca3af" />
                             <Text style={styles.itemLabel}>TERMS OF SERVICE</Text>
                         </View>
@@ -207,7 +262,7 @@ export default function SettingsScreen() {
 
                     <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
                         <View style={styles.listItemLeft}>
-                            <Text style={styles.itemIndex}>09</Text>
+                            <Text style={styles.itemIndex}>11</Text>
                             <MaterialIcons name="lock-outline" size={18} color="#9ca3af" />
                             <Text style={styles.itemLabel}>PRIVACY POLICY</Text>
                         </View>
@@ -482,14 +537,13 @@ const styles = StyleSheet.create({
     currencyBtn: {
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 6,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
         backgroundColor: 'rgba(255, 255, 255, 0.03)',
     },
     currencyBtnActive: {
         borderColor: SettingsTheme.primary,
-        backgroundColor: 'rgba(25, 230, 94, 0.1)',
+        backgroundColor: SettingsTheme.primary,
     },
     currencyBtnText: {
         fontFamily: Typography.fontFamily.mono,
@@ -498,19 +552,20 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     currencyBtnTextActive: {
-        color: SettingsTheme.primary,
+        color: 'black',
+        fontFamily: Typography.fontFamily.displayBold,
     },
     toggleContainer: {
         width: 44,
         height: 24,
-        borderRadius: 12,
         justifyContent: 'center',
         paddingHorizontal: 2,
+        borderWidth: 1,
+        borderColor: '#333',
     },
     toggleHandle: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: 18,
+        height: 18,
         backgroundColor: 'white',
     },
     claimTitle: {

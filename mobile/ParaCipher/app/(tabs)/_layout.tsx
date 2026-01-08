@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/Theme';
+import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -43,13 +44,17 @@ export default function TabLayout() {
         },
         tabBarItemStyle: {
           flex: 1,
-          height: 60,
-          alignItems: 'center',
           justifyContent: 'center',
+          alignItems: 'center',
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.gray500,
+      }}
+      screenListeners={{
+        tabPress: () => {
+          HapticFeedback.selection();
+        },
       }}>
       <Tabs.Screen
         name="index"
