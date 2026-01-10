@@ -1,173 +1,263 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import BinaryRain from "./components/BinaryRain";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
+export default function LandingPage() {
+  const [activeWorkers, setActiveWorkers] = useState(14205);
+  const [claimsPaid, setClaimsPaid] = useState(892);
+  const [scrolled, setScrolled] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
 
-    // Simulate authentication
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (email && password) {
-      router.push("/system-overview");
-    } else {
-      setError("Invalid credentials");
-      setIsLoading(false);
-    }
-  };
+    const interval = setInterval(() => {
+      setActiveWorkers(prev => prev + Math.floor(Math.random() * 3));
+    }, 3000);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background grid */}
-      <div className="absolute inset-0 bg-grid opacity-50" />
-      
-      {/* Floating orbs */}
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[var(--accent)] rounded-full blur-[120px] opacity-10 float" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--accent-secondary)] rounded-full blur-[150px] opacity-10 float" style={{ animationDelay: "1s" }} />
-      
-      {/* Scanline effect */}
-      <div className="scanline" />
+    <div className="min-h-screen bg-[var(--background)] relative flex flex-col font-sans overflow-x-hidden selection:bg-[var(--accent-primary)] selection:text-[var(--background)]">
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo & Title */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--card)] border border-[var(--border)] mb-6 glow-border">
-            <svg
-              className="w-8 h-8 text-[var(--accent)]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+      {/* Interactive Binary Background */}
+      <BinaryRain />
+
+      {/* Scanline Effect Overlay */}
+      <div className="scanline-effect fixed inset-0 z-50 pointer-events-none opacity-[0.03]" />
+
+      {/* Header */}
+      <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'bg-[var(--background-secondary)]/90 backdrop-blur-md border-b border-[var(--card-border)]' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative w-40 h-10">
+              <Image
+                src="/ParaCipher.png"
+                alt="ParaCipher Logo"
+                fill
+                className="object-contain object-left"
               />
-            </svg>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
-            <span className="text-[var(--accent)]">Para</span>
-            <span className="text-[var(--foreground)]">Cipher</span>
-          </h1>
-          <p className="text-[var(--muted)] text-sm font-medium tracking-wider uppercase">
-            Admin Control Panel
-          </p>
-        </div>
-
-        {/* Login Card */}
-        <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-8 glow-border">
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-[var(--muted)]">
-                Administrator Email
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all font-mono text-sm"
-                  placeholder="admin@paracipher.io"
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <svg className="w-5 h-5 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-[var(--muted)]">
-                Access Key
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-all font-mono text-sm"
-                  placeholder="••••••••••••"
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <svg className="w-5 h-5 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="flex items-center gap-2 text-[var(--danger)] text-sm bg-[var(--danger)]/10 px-4 py-3 rounded-xl border border-[var(--danger)]/20">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                {error}
-              </div>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-[var(--accent)] text-[var(--background)] font-semibold py-3.5 rounded-xl btn-glow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Authenticating...
-                </>
-              ) : (
-                <>
-                  Access Dashboard
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </>
-              )}
+          <nav className="hidden md:flex gap-10 text-[10px] uppercase font-bold tracking-[0.2em] text-[var(--text-secondary)]">
+            <a href="#features" className="hover:text-[var(--foreground)] transition-colors relative group">
+              FEATURES
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[var(--accent-primary)] group-hover:w-full transition-all duration-300" />
+            </a>
+            <a href="#stats" className="hover:text-[var(--foreground)] transition-colors relative group">
+              LIVE_DATA
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[var(--accent-primary)] group-hover:w-full transition-all duration-300" />
+            </a>
+            <a href="#how-it-works" className="hover:text-[var(--foreground)] transition-colors relative group">
+              PROTOCOL
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[var(--accent-primary)] group-hover:w-full transition-all duration-300" />
+            </a>
+          </nav>
+          <Link href="/login">
+            <button className="btn-tech px-8 py-3 text-[10px] font-bold tracking-[0.15em] hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-all">
+              LAUNCH APP_
             </button>
-          </form>
+          </Link>
+        </div>
+      </header>
 
-          {/* Additional Options */}
-          <div className="mt-6 pt-6 border-t border-[var(--border)]">
-            <div className="flex items-center justify-between text-sm">
-              <button className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors">
-                Forgot Access Key?
+      {/* Hero Section */}
+      <section className="flex-1 flex items-center justify-center px-6 pt-32 pb-20 relative z-10">
+        <div className="max-w-6xl mx-auto text-center relative">
+
+          {/* Decorative Lines */}
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[1px] h-20 bg-gradient-to-b from-transparent to-[var(--card-border)]" />
+
+
+
+          {/* Main Headline */}
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-[var(--foreground)] mb-8 leading-[0.9]">
+            INSTANT INSURANCE
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-secondary)] to-[var(--foreground)] opacity-50">FOR GIG WORKERS</span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-16 leading-relaxed font-light">
+            Algorithmic protection. Zero human bias.
+            <br />
+            <span className="text-[var(--foreground)] font-bold">₹25/day coverage</span> → <span className="text-[var(--accent-success)] font-bold">₹50,000 instant payouts</span>
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
+            <Link href="/login">
+              <button className="group relative btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] bg-[var(--foreground)] text-[var(--background)] hover:bg-transparent hover:text-[var(--foreground)] border border-[var(--foreground)] overflow-hidden">
+                <span className="relative z-10 group-hover:translate-x-1 transition-transform inline-block">DEPLOY POLICY</span>
+                <span className="ml-2 relative z-10 group-hover:translate-x-2 transition-transform inline-block">→</span>
+                <div className="absolute inset-0 bg-[var(--background)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out z-0" />
               </button>
-              <div className="flex items-center gap-2 text-[var(--muted)]">
-                <span className="w-2 h-2 rounded-full bg-[var(--success)] status-pulse" />
-                <span className="text-xs">System Online</span>
+            </Link>
+            <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">
+              <button className="btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] text-[var(--text-secondary)] border-[var(--card-border)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]">
+                VIEW CONTRACTS
+              </button>
+            </a>
+          </div>
+
+          {/* Live Stats */}
+          <div id="stats" className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--card-border)]/50 backdrop-blur-sm border border-[var(--card-border)] max-w-5xl mx-auto">
+            <div className="bg-[var(--background)]/80 p-8 text-center hover:bg-[var(--background-secondary)] transition-colors group">
+              <p className="text-3xl md:text-4xl font-bold text-[var(--foreground)] group-hover:text-[var(--accent-success)] transition-colors">{activeWorkers.toLocaleString()}</p>
+              <p className="text-[9px] text-[var(--text-secondary)] tracking-[0.2em] mt-2 uppercase">Active Nodes</p>
+            </div>
+            <div className="bg-[var(--background)]/80 p-8 text-center hover:bg-[var(--background-secondary)] transition-colors group">
+              <p className="text-3xl md:text-4xl font-bold text-[var(--foreground)] group-hover:text-[var(--accent-primary)] transition-colors">{claimsPaid}</p>
+              <p className="text-[9px] text-[var(--text-secondary)] tracking-[0.2em] mt-2 uppercase">Claims Settled</p>
+            </div>
+            <div className="bg-[var(--background)]/80 p-8 text-center hover:bg-[var(--background-secondary)] transition-colors group">
+              <p className="text-3xl md:text-4xl font-bold text-[var(--foreground)] group-hover:text-[var(--accent-secondary)] transition-colors">1.2s</p>
+              <p className="text-[9px] text-[var(--text-secondary)] tracking-[0.2em] mt-2 uppercase">Finality</p>
+            </div>
+            <div className="bg-[var(--background)]/80 p-8 text-center hover:bg-[var(--background-secondary)] transition-colors group">
+              <p className="text-3xl md:text-4xl font-bold text-[var(--foreground)] group-hover:text-[var(--accent-alert)] transition-colors">12.5%</p>
+              <p className="text-[9px] text-[var(--text-secondary)] tracking-[0.2em] mt-2 uppercase">Yield APY</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="border-t border-[var(--card-border)] bg-[var(--background-secondary)] py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16">
+            <h2 className="text-4xl font-bold tracking-tighter text-[var(--foreground)]">PROTOCOL<br />FEATURES</h2>
+            <p className="text-[var(--text-secondary)] text-sm max-w-md text-right mt-4 md:mt-0">
+              Trustless infrastructure powered by Chainlink Oracles<br />and Polygon PoS security.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="tech-border p-8 group hover:bg-[var(--card-hover)] transition-all duration-500 cursor-default bg-[var(--background-secondary)]/80 backdrop-blur-sm">
+              <div className="w-12 h-12 border border-[var(--accent-success)]/30 bg-[var(--accent-success)]/5 flex items-center justify-center mb-6 group-hover:border-[var(--accent-success)] transition-colors">
+                <span className="text-[var(--accent-success)] text-xl">⚡</span>
+              </div>
+              <h3 className="text-lg font-bold tracking-widest text-[var(--foreground)] mb-4">INSTANT SETTLEMENT</h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
+                Smart contracts execute payouts immediately upon Oracle verification. Eliminates claims adjusters and administrative lag.
+              </p>
+              <div className="mt-8 h-[1px] w-full bg-[var(--card-border)] relative overflow-hidden">
+                <div className="absolute left-0 top-0 h-full w-full bg-[var(--accent-success)] -translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="tech-border p-8 group hover:bg-[var(--card-hover)] transition-all duration-500 cursor-default bg-[var(--background-secondary)]/80 backdrop-blur-sm">
+              <div className="w-12 h-12 border border-[var(--accent-primary)]/30 bg-[var(--accent-primary)]/5 flex items-center justify-center mb-6 group-hover:border-[var(--accent-primary)] transition-colors">
+                <span className="text-[var(--accent-primary)] text-xl">🛡️</span>
+              </div>
+              <h3 className="text-lg font-bold tracking-widest text-[var(--foreground)] mb-4">SHIFT-BASED COVERAGE</h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
+                24-hour micro-policies. Workers pay only when they drive. Auto-expiry creates capital efficiency and flexibility.
+              </p>
+              <div className="mt-8 h-[1px] w-full bg-[var(--card-border)] relative overflow-hidden">
+                <div className="absolute left-0 top-0 h-full w-full bg-[var(--accent-primary)] -translate-x-full group-hover:translate-x-0 transition-transform duration-700 delay-100" />
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="tech-border p-8 group hover:bg-[var(--card-hover)] transition-all duration-500 cursor-default bg-[var(--background-secondary)]/80 backdrop-blur-sm">
+              <div className="w-12 h-12 border border-[var(--accent-secondary)]/30 bg-[var(--accent-secondary)]/5 flex items-center justify-center mb-6 group-hover:border-[var(--accent-secondary)] transition-colors">
+                <span className="text-[var(--accent-secondary)] text-xl">📈</span>
+              </div>
+              <h3 className="text-lg font-bold tracking-widest text-[var(--foreground)] mb-4">ON-CHAIN REPUTATION</h3>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed group-hover:text-[var(--foreground)] transition-colors">
+                SBTs (Soulbound Tokens) track safety history. Proven safe drivers unlock premium pools and up to 20% discounts.
+              </p>
+              <div className="mt-8 h-[1px] w-full bg-[var(--card-border)] relative overflow-hidden">
+                <div className="absolute left-0 top-0 h-full w-full bg-[var(--accent-secondary)] -translate-x-full group-hover:translate-x-0 transition-transform duration-700 delay-200" />
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-[var(--muted)]">
-            Secured by cryptographic protocols • v2.4.1
-          </p>
+      {/* How It Works */}
+      <section id="how-it-works" className="border-t border-[var(--card-border)] py-32 px-6 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-4xl font-bold tracking-tighter text-center text-[var(--foreground)] mb-20">EXECUTION FLOW</h2>
+
+          <div className="relative">
+            {/* Vertical Line */}
+            <div className="absolute left-6 top-0 bottom-0 w-[1px] bg-[var(--card-border)] md:left-1/2 md:-translate-x-1/2" />
+
+            {/* Steps Container */}
+            <div className="space-y-16">
+
+              {/* Step 1 */}
+              <div className="relative grid grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-12 items-center">
+                <div className="order-2 md:order-1 md:text-right">
+                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-2 tracking-widest uppercase">Coverage Init</h3>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Driver initiates <span className="font-mono text-[var(--accent-primary)]">`buyDailyCoverage()`</span> via app.<br />25 MATIC locked in pool.</p>
+                </div>
+                <div className="order-1 md:order-2 flex justify-center z-10">
+                  <div className="w-12 h-12 border bg-[var(--background)] border-[var(--card-border)] flex items-center justify-center shrink-0 text-[var(--foreground)] font-bold text-sm">01</div>
+                </div>
+                <div className="hidden md:block order-3" />
+              </div>
+
+              {/* Step 2 */}
+              <div className="relative grid grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-12 items-center">
+                <div className="hidden md:block order-1" />
+                <div className="order-1 md:order-2 flex justify-center z-10">
+                  <div className="w-12 h-12 border bg-[var(--background)] border-[var(--accent-secondary)] flex items-center justify-center shrink-0 text-[var(--accent-secondary)] font-bold text-sm">02</div>
+                </div>
+                <div className="order-2 md:order-3 text-left">
+                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-2 tracking-widest uppercase">Event Detection</h3>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Off-chain Oracle verifies accident parameters via<br />GPS, Gyroscope & Police APIs.</p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="relative grid grid-cols-[auto_1fr] md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-12 items-center">
+                <div className="order-2 md:order-1 md:text-right">
+                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-2 tracking-widest uppercase">Value Transfer</h3>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">Contract releases <span className="font-mono text-[var(--accent-success)]">`50,000 MATIC`</span> to worker.<br />Average finality: 1.2 seconds.</p>
+                </div>
+                <div className="order-1 md:order-2 flex justify-center z-10">
+                  <div className="w-12 h-12 border bg-[var(--background)] border-[var(--accent-success)] flex items-center justify-center shrink-0 text-[var(--accent-success)] font-bold text-sm animate-pulse">03</div>
+                </div>
+                <div className="hidden md:block order-3" />
+              </div>
+
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-[var(--card-border)] bg-[var(--background-secondary)] py-12 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col items-start gap-2">
+            <div className="flex items-center gap-3">
+              <div className="relative w-5 h-5">
+                {/* Mini Logo for Footer */}
+                <Image src="/ParaCipher.png" alt="ParaCipher" fill className="object-contain" />
+              </div>
+              <span className="text-xs font-bold tracking-[0.2em] text-[var(--text-secondary)]">PARACIPHER</span>
+            </div>
+            <p className="text-[10px] text-[var(--text-secondary)] ml-8">© 2026 DECENTRALIZED PROTOCOL</p>
+          </div>
+
+          <div className="flex gap-8 text-[10px] font-bold tracking-widest text-[var(--text-secondary)] uppercase">
+            <a href="#" className="hover:text-[var(--foreground)] transition-colors">Documentation</a>
+            <a href="#" className="hover:text-[var(--foreground)] transition-colors">Audit Report</a>
+            <a href="#" className="hover:text-[var(--foreground)] transition-colors">Github</a>
+            <a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
