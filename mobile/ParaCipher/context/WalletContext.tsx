@@ -35,19 +35,29 @@ const WalletProviderInner = ({ children }: { children: React.ReactNode }) => {
             const formattedAddress = formatAddress(account);
             setAddress(formattedAddress);
             setIsConnected(true);
-            loadBalance(account);
-            saveWalletState(formattedAddress);
-        } else {
+            // Load balance asynchronously to avoid blocking render
+            setTimeout(() => {
+                loadBalance(account);
+            }, 0);
+            saveWalletState(account); // Save full address, not formatted
+        } else if (!connecting) {
+            // Only reset if not currently connecting
             setIsConnected(false);
             setAddress(null);
             setBalance('0.00');
         }
     }, [connected, account, connecting]);
 
-    // Load persisted state on mount
+    // Load persisted state on mount (only after SDK is ready)
     useEffect(() => {
-        loadWalletState();
-    }, []);
+        // Delay to ensure SDK is fully initialized
+        const timer = setTimeout(() => {
+            if (connected && account) {
+                loadWalletState();
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [connected, account]);
 
     const formatAddress = (addr: string): string => {
         if (!addr) return '';
@@ -58,11 +68,10 @@ const WalletProviderInner = ({ children }: { children: React.ReactNode }) => {
     const loadWalletState = async () => {
         try {
             const storedAddress = await AsyncStorage.getItem('wallet_address');
-            if (storedAddress && connected && account) {
-                console.log('[WalletContext] Restored wallet state:', storedAddress);
-                setAddress(formatAddress(account));
-                setIsConnected(true);
-                loadBalance(account);
+            if (storedAddress) {
+                console.log('[WalletContext] Found stored wallet address:', storedAddress);
+                // Don't auto-connect, just log that we found it
+                // User needs to manually connect via button
             }
         } catch (e) {
             console.error('[WalletContext] Failed to load wallet state', e);
@@ -106,6 +115,12 @@ const WalletProviderInner = ({ children }: { children: React.ReactNode }) => {
         try {
             console.log('[WalletContext] Connect wallet initiated');
             
+            if (!sdk) {
+                console.error('[WalletContext] SDK not initialized');
+                Alert.alert("Error", "Wallet service is not ready. Please try again.");
+                return;
+            }
+            
             if (connecting) {
                 console.log('[WalletContext] Connection already in progress');
                 return;
@@ -119,7 +134,7 @@ const WalletProviderInner = ({ children }: { children: React.ReactNode }) => {
             console.log('[WalletContext] Requesting connection from MetaMask...');
             
             // Request connection - this will open MetaMask app via deep link
-            const accounts = await sdk?.connect();
+            const accounts = await sdk.connect();
             
             console.log('[WalletContext] Connection response:', accounts);
             
@@ -200,16 +215,6 @@ const WalletProviderInner = ({ children }: { children: React.ReactNode }) => {
 
 // Outer provider that wraps with MetaMask SDK
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return null;
-    }
-
     return (
         <MetaMaskProvider
             options={{
@@ -223,6 +228,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
                 enableAnalytics: false,
                 // Deep linking configuration
                 shouldShimWeb3: false,
+                // Prevent auto-connection attempts
+                checkInstallationImmediately: false,
             }}
         >
             <WalletProviderInner>{children}</WalletProviderInner>
