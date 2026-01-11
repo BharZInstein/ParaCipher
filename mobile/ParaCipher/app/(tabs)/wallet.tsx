@@ -47,13 +47,14 @@ export default function WalletScreen() {
                         <MaterialIcons name="account-balance-wallet" size={48} color={WalletTheme.primary} />
                     </View>
                     <Text style={styles.connectTitle}>Connect Wallet</Text>
-                    <Text style={styles.connectDesc}>Link your crypto wallet to access insurance coverage and claims.</Text>
+                    <Text style={styles.connectDesc}>Link your MetaMask wallet to access insurance coverage and claims.</Text>
 
                     <TouchableOpacity
                         style={styles.connectBtn}
-                        onPress={() => {
+                        onPress={async () => {
                             HapticFeedback.light();
-                            connectWallet();
+                            console.log('[WalletScreen] Connect button pressed');
+                            await connectWallet();
                         }}
                     >
                         <Text style={styles.connectBtnText}>CONNECT WALLET</Text>
@@ -76,12 +77,21 @@ export default function WalletScreen() {
                             </View>
                         </View>
 
+                        {/* Connected Address Display */}
+                        <View style={styles.addressSection}>
+                            <View style={styles.addressRow}>
+                                <View style={styles.addressDot} />
+                                <Text style={styles.addressLabel}>Connected:</Text>
+                                <Text style={styles.addressValue}>{address || '0x...'}</Text>
+                            </View>
+                        </View>
+
                         {/* Balance Section */}
                         <View style={styles.balanceSection}>
                             <Text style={styles.balanceLabel}>Total Balance</Text>
                             <View style={styles.balanceRow}>
                                 <Text style={styles.currencySymbol}>$</Text>
-                                <Text style={styles.balanceValue}>1,240.50</Text>
+                                <Text style={styles.balanceValue}>{balance}</Text>
                             </View>
 
                             <View style={styles.balanceMetaRow}>
@@ -571,5 +581,37 @@ const styles = StyleSheet.create({
         fontFamily: Typography.fontFamily.displayBold,
         fontSize: 12,
         textTransform: 'uppercase',
+    },
+    addressSection: {
+        marginTop: 24,
+        marginBottom: 16,
+        padding: 16,
+        backgroundColor: 'rgba(204, 255, 0, 0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(204, 255, 0, 0.2)',
+        borderRadius: 12,
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    addressDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: WalletTheme.primary,
+    },
+    addressLabel: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 12,
+        color: '#9ca3af',
+        letterSpacing: 0.5,
+    },
+    addressValue: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 14,
+        color: WalletTheme.primary,
+        fontWeight: '700',
     },
 });

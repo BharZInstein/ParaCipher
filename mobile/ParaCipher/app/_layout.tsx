@@ -38,8 +38,8 @@ export default function RootLayout() {
   }
 
   return (
-    <CurrencyProvider>
-      <WalletProvider>
+    <WalletProvider>
+      <CurrencyProvider>
         <ThemeProvider value={DarkTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -48,7 +48,7 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style="light" />
         </ThemeProvider>
-      </WalletProvider>
-    </CurrencyProvider>
+      </CurrencyProvider>
+    </WalletProvider>
   );
 }
