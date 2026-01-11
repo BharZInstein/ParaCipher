@@ -16,7 +16,7 @@ contract InsurancePolicy {
     uint256 public constant PREMIUM_AMOUNT = 25 ether;
     
     // Coverage amount: 50,000 MATIC (represents ₹50,000)
-    uint256 public constant COVERAGE_AMOUNT = 50000 ether;
+    uint256 public constant COVERAGE_AMOUNT = 50 ether;
     
     // Coverage duration: 24 hours
     uint256 public constant COVERAGE_DURATION = 24 hours;
