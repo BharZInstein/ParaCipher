@@ -1,54 +1,63 @@
-import CustomToggle from '@/components/CustomToggle';
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Colors, Typography } from '@/constants/Theme';
-import { HapticFeedback } from '@/utils/Haptics';
+import { Colors, Typography } from '@/constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const SecurityToggle = ({ label, icon, initialValue }: { label: string, icon: keyof typeof MaterialIcons.glyphMap, initialValue: boolean }) => {
-    const [isEnabled, setIsEnabled] = useState(initialValue);
-
-    return (
-        <View style={styles.row}>
-            <View style={styles.rowLeft}>
-                <View style={styles.iconBox}>
-                    <MaterialIcons name={icon} size={20} color={Colors.primary} />
-                </View>
-                <Text style={styles.label}>{label}</Text>
-            </View>
-            <CustomToggle value={isEnabled} onValueChange={(val) => {
-                HapticFeedback.success();
-                setIsEnabled(val);
-            }} />
-        </View>
-    );
-};
+import { StyleSheet, Switch, Text, View } from 'react-native';
 
 export default function SecurityScreen() {
+    const [twoFactor, setTwoFactor] = useState(true);
+    const [biometric, setBiometric] = useState(true);
+
     return (
         <View style={styles.container}>
             <TechBackground />
-            <UnifiedHeader title="Security" showBack />
+            <UnifiedHeader title="SECURITY" subtitle="ACCOUNT PROTECTION" showBack />
 
             <View style={styles.content}>
+
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Authentication</Text>
-                    <SecurityToggle label="Two-Factor Auth (2FA)" icon="security" initialValue={true} />
-                    <SecurityToggle label="Biometric Login" icon="fingerprint" initialValue={false} />
+                    <Text style={styles.sectionTitle}>AUTHENTICATION</Text>
+
+                    <View style={styles.row}>
+                        <View>
+                            <Text style={styles.itemTitle}>Biometric Login</Text>
+                            <Text style={styles.itemSub}>FaceID / Fingerprint</Text>
+                        </View>
+                        <Switch
+                            value={biometric}
+                            onValueChange={setBiometric}
+                            trackColor={{ false: '#333', true: 'rgba(25, 230, 94, 0.3)' }}
+                            thumbColor={biometric ? Colors.primary : '#f4f3f4'}
+                        />
+                    </View>
+
+                    <View style={styles.row}>
+                        <View>
+                            <Text style={styles.itemTitle}>2-Factor Authentication</Text>
+                            <Text style={styles.itemSub}>Require OTP for withdrawals</Text>
+                        </View>
+                        <Switch
+                            value={twoFactor}
+                            onValueChange={setTwoFactor}
+                            trackColor={{ false: '#333', true: 'rgba(25, 230, 94, 0.3)' }}
+                            thumbColor={twoFactor ? Colors.primary : '#f4f3f4'}
+                        />
+                    </View>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Data Privacy</Text>
-                    <SecurityToggle label="Share Usage Data" icon="analytics" initialValue={true} />
-                    <SecurityToggle label="Location Tracking" icon="location-on" initialValue={true} />
+                    <Text style={styles.sectionTitle}>DEVICES</Text>
+                    <View style={styles.deviceItem}>
+                        <MaterialIcons name="phone-iphone" size={24} color={Colors.gray400} />
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <Text style={styles.itemTitle}>iPhone 15 Pro</Text>
+                            <Text style={styles.itemSub}>Generic City, US • Active Now</Text>
+                        </View>
+                        <View style={styles.activeDot} />
+                    </View>
                 </View>
 
-                <TouchableOpacity style={styles.dangerBtn}>
-                    <MaterialIcons name="delete-forever" size={20} color="#FF4444" />
-                    <Text style={styles.dangerText}>Delete Account</Text>
-                </TouchableOpacity>
             </View>
         </View>
     );
@@ -61,58 +70,47 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
-        gap: 32,
     },
     section: {
-        gap: 16,
+        marginBottom: 32,
+        backgroundColor: Colors.surfaceCard,
+        borderRadius: 16,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: Colors.surfaceBorder,
     },
     sectionTitle: {
-        color: Colors.gray500,
+        color: Colors.gray400,
         fontFamily: Typography.fontFamily.mono,
-        fontSize: 12,
-        marginBottom: 8,
-        textTransform: 'uppercase',
+        fontSize: 10,
+        letterSpacing: 2,
+        marginBottom: 16,
     },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.surfaceBorder,
+        marginBottom: 24,
     },
-    rowLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    iconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        backgroundColor: 'rgba(0, 255, 102, 0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    label: {
+    itemTitle: {
         color: 'white',
-        fontFamily: Typography.fontFamily.displayMedium,
+        fontFamily: Typography.fontFamily.displayBold,
         fontSize: 14,
     },
-    dangerBtn: {
+    itemSub: {
+        color: Colors.gray600,
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 12,
+        marginTop: 2,
+    },
+    deviceItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 68, 68, 0.3)',
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 68, 68, 0.05)',
-        gap: 8,
-        marginTop: 20,
     },
-    dangerText: {
-        color: '#FF4444',
-        fontFamily: Typography.fontFamily.displayBold,
+    activeDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: Colors.primary,
     },
 });

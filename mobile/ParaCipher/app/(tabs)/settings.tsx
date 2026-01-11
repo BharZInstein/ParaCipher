@@ -1,6 +1,6 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,7 +16,7 @@ const { width } = Dimensions.get('window');
 const SettingsTheme = {
     primary: "#19e65e", // Neon Green
     background: "#050505",
-    surface: "#0A0A0A",
+    surface: "#0a0a0a",
     border: "rgba(255, 255, 255, 0.1)",
     textGray: "#9ca3af",
     danger: "#ef4444",
@@ -24,10 +24,12 @@ const SettingsTheme = {
 
 import CustomToggle from '@/components/CustomToggle';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useWallet } from '@/context/WalletContext';
 
 export default function SettingsScreen() {
     const router = useRouter();
     const { currency, setCurrencyPreference } = useCurrency();
+    const { disconnectWallet } = useWallet();
     const [notifications, setNotifications] = useState(true);
     const [isAppLockEnabled, setIsAppLockEnabled] = useState(false);
 
@@ -58,6 +60,12 @@ export default function SettingsScreen() {
         } catch (e) {
             console.error('Failed to save settings', e);
         }
+    };
+
+    const handleDisconnect = async () => {
+        HapticFeedback.heavy();
+        await disconnectWallet();
+        router.replace('/');
     };
 
     return (
@@ -179,7 +187,14 @@ export default function SettingsScreen() {
                         <Text style={styles.sectionTitle}>// SUPPORT & RESOURCES</Text>
                     </View>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/support');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>05</Text>
                             <MaterialIcons name="chat-bubble-outline" size={18} color="#9ca3af" />
@@ -189,7 +204,14 @@ export default function SettingsScreen() {
                         <View style={styles.bottomBorder} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/support');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>06</Text>
                             <MaterialIcons name="help-outline" size={18} color="#9ca3af" />
@@ -203,7 +225,14 @@ export default function SettingsScreen() {
                         <Text style={styles.sectionTitle}>// AUDIT & LEGAL</Text>
                     </View>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/audit');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>07</Text>
                             <MaterialIcons name="verified-user" size={18} color="#9ca3af" />
@@ -250,7 +279,14 @@ export default function SettingsScreen() {
                         <View style={styles.bottomBorder} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/terms');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>10</Text>
                             <MaterialIcons name="gavel" size={18} color="#9ca3af" />
@@ -260,7 +296,14 @@ export default function SettingsScreen() {
                         <View style={styles.bottomBorder} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.listItem} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        style={styles.listItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            HapticFeedback.light();
+                            router.push('/settings/privacy');
+                        }}
+                    >
                         <View style={styles.listItemLeft}>
                             <Text style={styles.itemIndex}>11</Text>
                             <MaterialIcons name="lock-outline" size={18} color="#9ca3af" />
@@ -271,10 +314,15 @@ export default function SettingsScreen() {
 
                     {/* Footer */}
                     <View style={styles.footer}>
-                        <TouchableOpacity style={styles.disconnectBtn}>
+                        <TouchableOpacity
+                            style={styles.disconnectBtn}
+                            onPress={handleDisconnect}
+                        >
                             <View style={styles.disconnectOverlay} />
-                            <MaterialIcons name="power-settings-new" size={18} color={SettingsTheme.danger} />
-                            <Text style={styles.disconnectText}>DISCONNECT WALLET</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <MaterialIcons name="power-settings-new" size={18} color={SettingsTheme.danger} />
+                                <Text style={styles.disconnectText}>DISCONNECT WALLET</Text>
+                            </View>
                         </TouchableOpacity>
 
                         <View style={styles.networkStatus}>
@@ -608,6 +656,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(239, 68, 68, 0.3)',
         overflow: 'hidden',
+        marginBottom: 24,
     },
     disconnectOverlay: {
         ...StyleSheet.absoluteFillObject,

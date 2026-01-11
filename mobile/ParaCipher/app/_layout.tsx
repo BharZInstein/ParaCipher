@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { WalletProvider } from '@/context/WalletContext';
 import {

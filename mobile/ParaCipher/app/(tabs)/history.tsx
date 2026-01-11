@@ -1,6 +1,6 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';

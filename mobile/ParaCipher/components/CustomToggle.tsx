@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/Theme';
+import { Colors } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
