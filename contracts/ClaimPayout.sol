@@ -57,6 +57,22 @@ contract ClaimPayout {
     }
     
     
+    // ========== EVIDENCE STRUCTURE ==========
+    
+    /**
+     * @dev Struct to store accident evidence for claim verification
+     * This ensures claims are backed by real evidence (photos, GPS, timestamps)
+     */
+    struct ClaimEvidence {
+        string photoIpfsHash;        // IPFS hash of accident photo (REQUIRED)
+        string gpsLatitude;          // Accident GPS latitude (REQUIRED)
+        string gpsLongitude;         // Accident GPS longitude (REQUIRED)
+        uint256 accidentTimestamp;   // Unix timestamp when accident occurred (REQUIRED)
+        string policeReportId;       // Police report number (optional)
+        string description;          // Detailed accident description (REQUIRED, min 10 chars)
+    }
+    
+    
     // ========== CLAIM STRUCTURE ==========
     
     /**
@@ -69,7 +85,9 @@ contract ClaimPayout {
         uint256 processedAt;        // Timestamp when claim was approved/rejected
         ClaimStatus status;         // Current status of claim
         string notes;               // Optional notes from worker
+        ClaimEvidence evidence;     // Accident evidence (photos, GPS, timestamp, etc)
     }
+
     
     
     // ========== MAPPINGS ==========
@@ -84,8 +102,11 @@ contract ClaimPayout {
         address indexed worker,
         uint256 requestedAmount,
         uint256 filedAt,
-        string notes
+        string notes,
+        string photoIpfsHash,
+        string gpsCoordinates
     );
+
     
     event ClaimApproved(
         address indexed worker,
@@ -157,19 +178,40 @@ contract ClaimPayout {
     // ========== MAIN FUNCTIONS ==========
     
     /**
-     * @dev Worker files a claim for accident coverage
-     * AUTO-APPROVES if coverage is valid (automated validation)
-     * @param notes Optional description of the accident
+     * @dev Worker files a claim for accident coverage WITH EVIDENCE
+     * REQUIRES: Accident photo, GPS coordinates, timestamp, and description
+     * VALIDATES: All evidence is present and valid before approving claim
+     * @param notes Optional notes from worker
+     * @param evidence ClaimEvidence struct with photo, GPS, timestamp, police report, description
      */
-    function fileClaim(string memory notes) external noReentrant {
+    function fileClaim(
+        string memory notes,
+        ClaimEvidence memory evidence
+    ) external noReentrant {
         address worker = msg.sender;
         
+        // ========== VALIDATION CHECK 1: COVERAGE ==========
         // Check if worker has valid active coverage
         require(
             insurancePolicy.hasValidCoverage(worker),
             "No valid coverage found. Buy coverage first!"
         );
         
+        // Get policy details to validate accident timing
+        (
+            ,
+            ,
+            uint256 policyStartTime,
+            uint256 policyEndTime,
+            bool isActive,
+            bool hasClaimed
+        ) = insurancePolicy.getPolicyDetails(worker);
+        
+        require(isActive, "Policy is not active");
+        require(!hasClaimed, "Policy already claimed");
+        
+        
+        // ========== VALIDATION CHECK 2: NO DUPLICATE CLAIMS ==========
         // Check if worker already has a pending/approved claim
         require(
             claims[worker].status == ClaimStatus.None ||
@@ -177,13 +219,78 @@ contract ClaimPayout {
             "You already have a pending or approved claim"
         );
         
+        
+        // ========== VALIDATION CHECK 3: PHOTO EVIDENCE REQUIRED ==========
+        // Accident photo is MANDATORY proof
+        require(
+            bytes(evidence.photoIpfsHash).length > 0,
+            "Accident photo required - upload photo to IPFS"
+        );
+        
+        
+        // ========== VALIDATION CHECK 4: GPS COORDINATES REQUIRED ==========
+        // Location proof is MANDATORY
+        require(
+            bytes(evidence.gpsLatitude).length > 0,
+            "GPS latitude required - location proof needed"
+        );
+        require(
+            bytes(evidence.gpsLongitude).length > 0,
+            "GPS longitude required - location proof needed"
+        );
+        
+        
+        // ========== VALIDATION CHECK 5: TIMESTAMP VALIDATION ==========
+        // Accident timestamp is MANDATORY and must be reasonable
+        require(
+            evidence.accidentTimestamp > 0,
+            "Accident timestamp required"
+        );
+        
+        // Timestamp cannot be in the future
+        require(
+            evidence.accidentTimestamp <= block.timestamp,
+            "Timestamp cannot be in future - invalid evidence"
+        );
+        
+        // Must file claim within 24 hours of accident (parametric insurance rule)
+        require(
+            evidence.accidentTimestamp >= block.timestamp - 24 hours,
+            "Accident too old - must file within 24 hours"
+        );
+        
+        
+        // ========== VALIDATION CHECK 6: ACCIDENT DURING COVERAGE ==========
+        // Accident MUST have occurred while coverage was active
+        require(
+            evidence.accidentTimestamp >= policyStartTime,
+            "Accident before coverage started - invalid claim"
+        );
+        require(
+            evidence.accidentTimestamp <= policyEndTime,
+            "Accident after coverage expired - invalid claim"
+        );
+        
+        
+        // ========== VALIDATION CHECK 7: DESCRIPTION REQUIRED ==========
+        // Detailed description is MANDATORY (helps prevent fraud)
+        require(
+            bytes(evidence.description).length >= 10,
+            "Description too short - minimum 10 characters required"
+        );
+        
+        
+        // ========== VALIDATION CHECK 8: SUFFICIENT FUNDS ==========
         // Check contract has enough balance for payout
         require(
             address(this).balance >= PAYOUT_AMOUNT,
             "Insufficient funds in pool for payout"
         );
         
-        // AUTO-APPROVE: Since coverage is valid, automatically approve and payout
+        
+        // ========== ALL CHECKS PASSED - AUTO-APPROVE ==========
+        // Since ALL evidence is valid, automatically approve and payout
+        
         // Mark policy as claimed in InsurancePolicy contract
         insurancePolicy.markAsClaimed(worker);
         
@@ -194,7 +301,8 @@ contract ClaimPayout {
             filedAt: block.timestamp,
             processedAt: block.timestamp,
             status: ClaimStatus.Approved,
-            notes: notes
+            notes: notes,
+            evidence: evidence  // Store all evidence on-chain
         });
         
         // Update stats
@@ -206,7 +314,21 @@ contract ClaimPayout {
             reputationScore.deductForClaim(worker);
         }
         
-        emit ClaimFiled(worker, PAYOUT_AMOUNT, block.timestamp, notes);
+        // Emit events with evidence details
+        string memory gpsCoords = string(abi.encodePacked(
+            evidence.gpsLatitude,
+            ",",
+            evidence.gpsLongitude
+        ));
+        
+        emit ClaimFiled(
+            worker,
+            PAYOUT_AMOUNT,
+            block.timestamp,
+            notes,
+            evidence.photoIpfsHash,
+            gpsCoords
+        );
         emit ClaimApproved(worker, PAYOUT_AMOUNT, block.timestamp);
         
         // Send payout to worker immediately
@@ -215,6 +337,7 @@ contract ClaimPayout {
         
         emit PayoutSent(worker, PAYOUT_AMOUNT, block.timestamp);
     }
+
     
     
     /**
@@ -322,6 +445,21 @@ contract ClaimPayout {
             claim.filedAt,
             claim.notes
         );
+    }
+    
+    
+    /**
+     * @dev Get claim evidence for a specific worker
+     * Used by admin dashboard to view submitted evidence
+     * @param worker Address of worker whose evidence to retrieve
+     * @return evidence Complete evidence struct (photo, GPS, timestamp, description)
+     */
+    function getClaimEvidence(address worker) 
+        external 
+        view 
+        returns (ClaimEvidence memory) 
+    {
+        return claims[worker].evidence;
     }
     
     
