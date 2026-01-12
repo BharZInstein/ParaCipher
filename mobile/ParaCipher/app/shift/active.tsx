@@ -1,11 +1,12 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
+import { BLOCKCHAIN_CONFIG } from '@/constants/Blockchain';
 import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 
 // Screen Dimensions
 const { width } = Dimensions.get('window');
@@ -17,18 +18,47 @@ const ScreenColors = {
     background: "#050505",
     surfaceDark: "#0f0f0f",
     surfaceBorder: "#1f1f1f",
+    disabled: "#444444",
 };
+
+// 6 hours in seconds for demo
+const COVERAGE_DURATION_SECONDS = BLOCKCHAIN_CONFIG.COVERAGE_DURATION * 60 * 60;
 
 export default function ActiveShiftScreen() {
     const router = useRouter();
-    const [seconds, setSeconds] = useState(0);
+    // For demo: start with full 6 hours
+    const [timeRemaining, setTimeRemaining] = useState(COVERAGE_DURATION_SECONDS);
+    const [isActive, setIsActive] = useState(true);
+    const [isPurchasing, setIsPurchasing] = useState(false);
+    const [purchaseComplete, setPurchaseComplete] = useState(false);
 
+    // Simulate purchase on mount (demo - deduct 5 SHM conceptually)
     useEffect(() => {
+        setIsPurchasing(true);
+        // Simulate a 2-second "transaction"
+        const timer = setTimeout(() => {
+            setIsPurchasing(false);
+            setPurchaseComplete(true);
+            console.log('[ActiveShift] Coverage purchased! 5 SHM deducted (demo)');
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Countdown timer - only starts after purchase
+    useEffect(() => {
+        if (!purchaseComplete || timeRemaining <= 0) return;
         const interval = setInterval(() => {
-            setSeconds(s => s + 1);
+            setTimeRemaining(t => {
+                const newTime = t - 1;
+                if (newTime <= 0) {
+                    setIsActive(false);
+                    return 0;
+                }
+                return newTime;
+            });
         }, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [purchaseComplete, timeRemaining]);
 
     const formatTime = (totalSeconds: number) => {
         const hours = Math.floor(totalSeconds / 3600);
@@ -41,7 +71,7 @@ export default function ActiveShiftScreen() {
         };
     };
 
-    const time = formatTime(seconds);
+    const time = formatTime(timeRemaining);
 
     const handleEndShift = () => {
         HapticFeedback.heavy();
@@ -120,17 +150,29 @@ export default function ActiveShiftScreen() {
                 {/* Main Display */}
                 <View style={styles.mainSection}>
                     {/* Status Pill */}
-                    <View style={styles.statusPill}>
+                    <View style={[styles.statusPill, !isActive && styles.statusPillExpired]}>
                         <View style={styles.pingContainer}>
-                            <View style={styles.pingDot} />
-                            <View style={styles.pingRing} />
+                            {isPurchasing ? (
+                                <ActivityIndicator size="small" color={ScreenColors.primary} />
+                            ) : (
+                                <>
+                                    <View style={[styles.pingDot, !isActive && styles.pingDotExpired]} />
+                                    <View style={[styles.pingRing, !isActive && styles.pingRingExpired]} />
+                                </>
+                            )}
                         </View>
-                        <Text style={styles.statusText}>COVERAGE ACTIVE</Text>
-                        <View style={styles.pillDivider} />
-                        <View style={styles.secureBadge}>
-                            <MaterialIcons name="verified-user" size={14} color={ScreenColors.primary} />
-                            <Text style={[styles.statusText, { color: ScreenColors.primary }]}>SECURE</Text>
-                        </View>
+                        <Text style={[styles.statusText, !isActive && styles.statusTextExpired]}>
+                            {isPurchasing ? 'PURCHASING...' : isActive ? 'COVERAGE ACTIVE' : 'COVERAGE EXPIRED'}
+                        </Text>
+                        {!isPurchasing && isActive && (
+                            <>
+                                <View style={styles.pillDivider} />
+                                <View style={styles.secureBadge}>
+                                    <MaterialIcons name="verified-user" size={14} color={ScreenColors.primary} />
+                                    <Text style={[styles.statusText, { color: ScreenColors.primary }]}>SECURE</Text>
+                                </View>
+                            </>
+                        )}
                     </View>
 
                     {/* Timer */}
@@ -157,38 +199,58 @@ export default function ActiveShiftScreen() {
                         </View>
                     </View>
 
-                    {/* Metrics */}
+                    {/* Coverage Info */}
                     <View style={styles.metricsContainer}>
                         <View style={styles.metricsHeader}>
-                            <Text style={styles.metricsTitle}>METRICS</Text>
-                            <MaterialIcons name="bar-chart" size={16} color="rgba(255,255,255,0.2)" />
+                            <Text style={styles.metricsTitle}>COVERAGE DETAILS</Text>
+                            <MaterialIcons name="verified-user" size={16} color={ScreenColors.primary} />
                         </View>
 
                         <View style={styles.metricCard}>
                             <View style={styles.metricLeft}>
                                 <View style={styles.metricIconBox}>
-                                    <MaterialCommunityIcons name="currency-btc" size={18} color="rgba(255,255,255,0.6)" />
+                                    <MaterialCommunityIcons name="shield-check" size={18} color={ScreenColors.primary} />
                                 </View>
                                 <View>
-                                    <Text style={styles.metricLabel}>EARNINGS</Text>
-                                    <Text style={styles.metricSub}>ETH / Min</Text>
+                                    <Text style={styles.metricLabel}>PREMIUM PAID</Text>
+                                    <Text style={styles.metricSub}>Coverage Cost</Text>
                                 </View>
                             </View>
-                            <Text style={styles.metricValue}>0.0002</Text>
+                            <Text style={styles.metricValue}>{BLOCKCHAIN_CONFIG.PREMIUM_AMOUNT} SHM</Text>
                         </View>
 
                         <View style={styles.metricCard}>
                             <View style={styles.metricLeft}>
                                 <View style={[styles.metricIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                                    <MaterialCommunityIcons name="cube-outline" size={18} color={ScreenColors.primary} />
+                                    <MaterialCommunityIcons name="cash-multiple" size={18} color={ScreenColors.primary} />
                                 </View>
                                 <View>
-                                    <Text style={styles.metricLabel}>BLOCK</Text>
-                                    <Text style={styles.metricSub}>Height</Text>
+                                    <Text style={styles.metricLabel}>MAX PAYOUT</Text>
+                                    <Text style={styles.metricSub}>If Claim Approved</Text>
                                 </View>
                             </View>
-                            <Text style={styles.metricValue}>#19.2k</Text>
+                            <Text style={styles.metricValue}>{BLOCKCHAIN_CONFIG.PAYOUT_AMOUNT} SHM</Text>
                         </View>
+
+                        {/* File Claim Button */}
+                        <TouchableOpacity
+                            style={[styles.fileClaimBtn, !isActive && styles.fileClaimBtnDisabled]}
+                            onPress={() => {
+                                if (!isActive) {
+                                    Alert.alert("Coverage Expired", "Your coverage has expired. Start a new shift to file claims.");
+                                    return;
+                                }
+                                HapticFeedback.light();
+                                router.push('/claim');
+                            }}
+                            activeOpacity={isActive ? 0.8 : 1}
+                            disabled={isPurchasing}
+                        >
+                            <MaterialIcons name="report-problem" size={20} color={isActive ? "white" : "#888"} />
+                            <Text style={[styles.fileClaimText, !isActive && styles.fileClaimTextDisabled]}>
+                                {isActive ? 'FILE A CLAIM' : 'COVERAGE EXPIRED'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -527,5 +589,41 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
+    },
+    fileClaimBtn: {
+        marginTop: 16,
+        backgroundColor: ScreenColors.primary,
+        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    fileClaimBtnDisabled: {
+        backgroundColor: ScreenColors.disabled,
+    },
+    fileClaimText: {
+        fontFamily: Typography.fontFamily.displayBold,
+        fontSize: 14,
+        color: 'white',
+        letterSpacing: 1,
+    },
+    fileClaimTextDisabled: {
+        color: '#888',
+    },
+    statusPillExpired: {
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+    },
+    pingDotExpired: {
+        backgroundColor: '#EF4444',
+    },
+    pingRingExpired: {
+        backgroundColor: '#EF4444',
+    },
+    statusTextExpired: {
+        color: '#F87171',
     },
 });

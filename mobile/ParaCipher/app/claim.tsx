@@ -1,4 +1,4 @@
-import { Colors, Typography } from '@/constants/Theme';
+import { Colors, Typography } from '@/constants/theme';
 import { ClaimPayoutService } from '@/services/BlockchainService';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -37,9 +37,9 @@ export default function FileClaimScreen() {
         setIsLoading(true);
 
         try {
-            // Wrap WalletConnect provider in ethers BrowserProvider
-            const ethersProvider = new ethers.BrowserProvider(provider);
-            const signer = await ethersProvider.getSigner();
+            // Wrap WalletConnect provider in ethers Web3Provider (v5)
+            const ethersProvider = new ethers.providers.Web3Provider(provider);
+            const signer = ethersProvider.getSigner();
             const result = await ClaimPayoutService.fileClaim(signer, description);
 
             if (result.success) {

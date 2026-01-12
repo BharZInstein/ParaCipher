@@ -17,34 +17,13 @@ export default function HomeScreen() {
   const { isConnected, provider } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleStartShift = async () => {
-    if (!isConnected || !provider) {
+  const handleStartShift = () => {
+    if (!isConnected) {
       Alert.alert("Not Connected", "Please connect your wallet from the Wallet tab first!");
       return;
     }
-
-    setIsLoading(true);
-
-    try {
-      // Wrap WalletConnect provider in ethers BrowserProvider
-      const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
-      const result = await InsurancePolicyService.buyCoverage(signer);
-
-      if (result.success) {
-        Alert.alert(
-          "Coverage Activated! ✅",
-          `You're covered for 24 hours!\n\nTransaction: ${result.txHash?.slice(0, 10)}...`,
-          [{ text: "OK", onPress: () => router.push('/shift/active') }]
-        );
-      } else {
-        Alert.alert("Failed", result.error || "Could not buy coverage. Make sure you have 5 SHM + gas fees.");
-      }
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to connect to blockchain");
-    } finally {
-      setIsLoading(false);
-    }
+    HapticFeedback.medium();
+    router.push('/shift/active');
   };
 
   return (
@@ -133,14 +112,23 @@ export default function HomeScreen() {
 
           {/* Start Shift Button */}
           <View style={styles.actionSection}>
-            <TouchableOpacity style={styles.startBtn} onPress={handleStartShift} activeOpacity={0.9}>
+            <TouchableOpacity
+              style={[styles.startBtn, isLoading && styles.startBtnDisabled]}
+              onPress={handleStartShift}
+              activeOpacity={0.9}
+              disabled={isLoading}
+            >
               <View style={styles.boltIconContainer}>
-                <MaterialIcons name="bolt" size={28} color={Colors.primary} />
+                {isLoading ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <MaterialIcons name="bolt" size={28} color={Colors.primary} />
+                )}
               </View>
               <View style={styles.startBtnContent}>
                 <View>
-                  <Text style={styles.startBtnTitle}>START SHIFT</Text>
-                  <Text style={styles.startBtnSubtitle}>AUTO-DEBIT ACTIVE</Text>
+                  <Text style={styles.startBtnTitle}>{isLoading ? 'PROCESSING...' : 'START SHIFT'}</Text>
+                  <Text style={styles.startBtnSubtitle}>6 HOUR COVERAGE</Text>
                 </View>
                 <Text style={styles.startBtnPrice}>5 SHM</Text>
               </View>

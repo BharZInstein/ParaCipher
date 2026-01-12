@@ -25,7 +25,7 @@ export class InsurancePolicyService {
             );
 
             const tx = await contract.buyDailyCoverage({
-                value: ethers.parseEther(BLOCKCHAIN_CONFIG.PREMIUM_AMOUNT)
+                value: ethers.utils.parseEther(BLOCKCHAIN_CONFIG.PREMIUM_AMOUNT)
             });
 
             console.log("[InsurancePolicy] Buy coverage tx:", tx.hash);
@@ -44,7 +44,7 @@ export class InsurancePolicyService {
     /**
      * Check current coverage status
      */
-    static async checkCoverageStatus(provider: ethers.Provider | ethers.Signer, address: string) {
+    static async checkCoverageStatus(provider: ethers.providers.Provider | ethers.Signer, address: string) {
         try {
             const contract = new ethers.Contract(
                 BLOCKCHAIN_CONFIG.INSURANCE_POLICY_ADDRESS,
@@ -59,7 +59,7 @@ export class InsurancePolicyService {
 
             return {
                 isActive,
-                coverageAmount: ethers.formatEther(coverageAmount),
+                coverageAmount: ethers.utils.formatEther(coverageAmount),
                 timeRemaining: Number(timeRemaining),
                 hoursLeft,
                 minutesLeft,
@@ -113,7 +113,7 @@ export class ClaimPayoutService {
     /**
      * Check claim status for current user
      */
-    static async checkClaimStatus(provider: ethers.Provider | ethers.Signer) {
+    static async checkClaimStatus(provider: ethers.providers.Provider | ethers.Signer) {
         try {
             const contract = new ethers.Contract(
                 BLOCKCHAIN_CONFIG.CLAIM_PAYOUT_ADDRESS,
@@ -125,7 +125,7 @@ export class ClaimPayoutService {
 
             return {
                 status: Number(status) as ClaimStatus,
-                requestedAmount: ethers.formatEther(requestedAmount),
+                requestedAmount: ethers.utils.formatEther(requestedAmount),
                 filedAt: Number(filedAt),
                 notes,
                 hasClaim: Number(status) !== ClaimStatus.None
@@ -177,7 +177,7 @@ export class ReputationScoreService {
     /**
      * Get reputation score for current user
      */
-    static async getMyScore(provider: ethers.Provider | ethers.Signer) {
+    static async getMyScore(provider: ethers.providers.Provider | ethers.Signer) {
         try {
             const contract = new ethers.Contract(
                 BLOCKCHAIN_CONFIG.REPUTATION_SCORE_ADDRESS,

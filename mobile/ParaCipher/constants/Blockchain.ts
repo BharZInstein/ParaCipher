@@ -17,9 +17,9 @@ export const BLOCKCHAIN_CONFIG = {
 
     // Amounts (in SHM)
     PREMIUM_AMOUNT: "5",     // What user pays for coverage
-    COVERAGE_AMOUNT: "150",  // What user is covered for
-    PAYOUT_AMOUNT: "150",    // What user gets if claim approved
-    COVERAGE_DURATION: 24    // Hours
+    COVERAGE_AMOUNT: "15",   // What user is covered for
+    PAYOUT_AMOUNT: "15",     // What user gets if claim approved
+    COVERAGE_DURATION: 6     // Hours
 };
 
 // Contract ABIs

@@ -27,8 +27,8 @@ const WalletContext = createContext<WalletContextType>({
     switchNetwork: async () => { },
 });
 
-// WalletConnect Project ID - you need to get this from https://cloud.walletconnect.com/
-const projectId = 'YOUR_PROJECT_ID_HERE'; // Replace with actual project ID
+// WalletConnect Project ID - from environment variable
+const projectId = process.env.EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID || '';
 
 const providerMetadata = {
     name: 'ParaCipher',
@@ -106,10 +106,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
             console.log('[WalletContext] Fetching balance for:', addr);
 
-            // Create ethers provider from WalletConnect provider
-            const ethersProvider = new ethers.BrowserProvider(wcProvider);
+            // Create ethers provider from WalletConnect provider (v5)
+            const ethersProvider = new ethers.providers.Web3Provider(wcProvider);
             const balance = await ethersProvider.getBalance(addr);
-            const formattedBalance = ethers.formatEther(balance);
+            const formattedBalance = ethers.utils.formatEther(balance);
             const numericBalance = parseFloat(formattedBalance);
             const displayBalance = numericBalance.toFixed(2);
             setBalance(displayBalance);
@@ -119,6 +119,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
             setBalance('0.00');
         }
     };
+
+    // Listen for chain changes from the wallet
+    useEffect(() => {
         if (wcProvider) {
             wcProvider.on("chainChanged", (newChainId: any) => {
                 // handle hex string or number
