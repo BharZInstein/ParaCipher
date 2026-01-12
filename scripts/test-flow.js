@@ -6,11 +6,20 @@ async function main() {
     console.log("🧪 PARACIPHER END-TO-END TEST FLOW");
     console.log("=".repeat(70) + "\n");
 
-    // Get signers
-    const [owner, worker1, worker2] = await ethers.getSigners();
+    // Get signers (on remote networks you may only have 1)
+    const signers = await ethers.getSigners();
+    if (signers.length === 0) {
+        throw new Error("No signers available. Check your private key configuration.");
+    }
+    const owner = signers[0];
+    const worker1 = signers[1] || owner;
+    const worker2 = signers[2] || owner;
+
+    const currencySymbol = hre.network.name === "shardeum" ? "SHM" : "MATIC";
+
     console.log("👤 Owner:", owner.address);
-    console.log("👤 Worker 1 (Rajesh):", worker1.address);
-    console.log("👤 Worker 2 (Priya):", worker2.address);
+    console.log("👤 Worker 1 (Rajesh):", worker1.address, worker1 === owner ? "(same as owner)" : "");
+    console.log("👤 Worker 2 (Priya):", worker2.address, worker2 === owner ? "(same as owner)" : "");
 
     console.log("\n📋 Deploying contracts...\n");
 
@@ -34,9 +43,37 @@ async function main() {
     await claimPayout.setReputationContract(await reputationScore.getAddress());
     console.log("🔗 Contracts linked");
 
-    // Fund ClaimPayout
-    await claimPayout.fundContract({ value: ethers.parseEther("100000") });
-    console.log("💰 ClaimPayout funded with 100,000 MATIC\n");
+    // Determine payout amount and ensure we have enough balance to fund
+    const payoutAmount = await claimPayout.PAYOUT_AMOUNT();
+    const fundingAmountEnv = process.env.TEST_FUNDING_AMOUNT || null;
+    const fundingAmount = fundingAmountEnv
+        ? ethers.parseEther(fundingAmountEnv)
+        : payoutAmount; // fund with at least payout amount
+
+    if (fundingAmount < payoutAmount) {
+        throw new Error(
+            `TEST_FUNDING_AMOUNT (${ethers.formatEther(fundingAmount)} ${currencySymbol}) is below payout amount ` +
+            `${ethers.formatEther(payoutAmount)} ${currencySymbol}. Increase TEST_FUNDING_AMOUNT or top up balance.`
+        );
+    }
+
+    const deployerBalance = await ethers.provider.getBalance(owner.address);
+
+    console.log("💰 Funding plan:");
+    console.log("   • Payout amount needed:", ethers.formatEther(payoutAmount), currencySymbol);
+    console.log("   • Planned funding:     ", ethers.formatEther(fundingAmount), currencySymbol);
+    console.log("   • Deployer balance:    ", ethers.formatEther(deployerBalance), currencySymbol);
+
+    if (deployerBalance < fundingAmount) {
+        throw new Error(
+            `Insufficient balance to fund ClaimPayout. Need ${ethers.formatEther(fundingAmount)} ${currencySymbol}, ` +
+            `have ${ethers.formatEther(deployerBalance)} ${currencySymbol}. ` +
+            `Set TEST_FUNDING_AMOUNT to a lower value or top up your account.`
+        );
+    }
+
+    await claimPayout.fundContract({ value: fundingAmount });
+    console.log(`💰 ClaimPayout funded with ${ethers.formatEther(fundingAmount)} ${currencySymbol}\n`);
 
     console.log("=".repeat(70));
     console.log("📖 SCENARIO: Rajesh's Insurance Journey");

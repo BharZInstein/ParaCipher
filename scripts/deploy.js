@@ -7,8 +7,10 @@ async function main() {
     console.log("=".repeat(60) + "\n");
 
     const [deployer] = await ethers.getSigners();
+    const currencySymbol = hre.network.name === "shardeum" ? "SHM" : "MATIC";
     console.log("📝 Deploying from account:", deployer.address);
-    console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "MATIC\n");
+    console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), currencySymbol);
+    console.log("🌐 Network:", hre.network.name, "\n");
 
     // ========== STEP 1: Deploy InsurancePolicy ==========
     console.log("📋 [1/5] Deploying InsurancePolicy...");
@@ -44,29 +46,43 @@ async function main() {
 
     // ========== STEP 5: Fund ClaimPayout ==========
     console.log("\n💰 [5/5] Funding ClaimPayout contract...");
-    const fundingAmount = ethers.parseEther("500000"); // 500,000 MATIC for payouts
-    console.log("   ↳ Amount:", ethers.formatEther(fundingAmount), "MATIC");
+
+    // Get funding amount from environment variable or use default (30 SHM for testing)
+    const fundingAmountEnv = process.env.FUNDING_AMOUNT || "30";
+    const fundingAmount = ethers.parseEther(fundingAmountEnv);
+
+    console.log("   ↳ Amount:", ethers.formatEther(fundingAmount), currencySymbol);
+    console.log("   ↳ Set FUNDING_AMOUNT env var to change this amount");
+
+    // Check if deployer has enough balance
+    const deployerBalance = await ethers.provider.getBalance(deployer.address);
+    if (deployerBalance < fundingAmount) {
+        console.log("   ⚠️  Warning: Deployer balance might be insufficient");
+        console.log("   ↳ Deployer balance:", ethers.formatEther(deployerBalance), currencySymbol);
+        console.log("   ↳ Required:", ethers.formatEther(fundingAmount), currencySymbol);
+    }
+
     const fundTx = await claimPayout.fundContract({ value: fundingAmount });
     await fundTx.wait();
-    
+
     const claimBalance = await ethers.provider.getBalance(claimPayoutAddress);
-    console.log("✅ ClaimPayout funded. Balance:", ethers.formatEther(claimBalance), "MATIC");
+    console.log("✅ ClaimPayout funded. Balance:", ethers.formatEther(claimBalance), currencySymbol);
 
     // ========== DEPLOYMENT SUMMARY ==========
     console.log("\n" + "=".repeat(60));
     console.log("🎉 DEPLOYMENT COMPLETE!");
     console.log("=".repeat(60));
-    
+
     console.log("\n📌 Contract Addresses:\n");
     console.log("   InsurancePolicy:  ", insurancePolicyAddress);
     console.log("   ClaimPayout:      ", claimPayoutAddress);
     console.log("   ReputationScore:  ", reputationScoreAddress);
 
     console.log("\n📊 Contract States:\n");
-    console.log("   Premium Amount:     ", ethers.formatEther(await insurancePolicy.PREMIUM_AMOUNT()), "MATIC");
-    console.log("   Coverage Amount:    ", ethers.formatEther(await insurancePolicy.COVERAGE_AMOUNT()), "MATIC");
-    console.log("   Payout Amount:      ", ethers.formatEther(await claimPayout.PAYOUT_AMOUNT()), "MATIC");
-    console.log("   ClaimPayout Balance:", ethers.formatEther(claimBalance), "MATIC");
+    console.log("   Premium Amount:     ", ethers.formatEther(await insurancePolicy.PREMIUM_AMOUNT()), currencySymbol);
+    console.log("   Coverage Amount:    ", ethers.formatEther(await insurancePolicy.COVERAGE_AMOUNT()), currencySymbol);
+    console.log("   Payout Amount:      ", ethers.formatEther(await claimPayout.PAYOUT_AMOUNT()), currencySymbol);
+    console.log("   ClaimPayout Balance:", ethers.formatEther(claimBalance), currencySymbol);
 
     console.log("\n🔥 Next Steps:\n");
     console.log("   1. Save contract addresses above");
@@ -86,9 +102,9 @@ async function main() {
             ReputationScore: reputationScoreAddress
         },
         constants: {
-            premiumAmount: "25 MATIC",
-            coverageAmount: "50000 MATIC",
-            payoutAmount: "50000 MATIC",
+            premiumAmount: "2 SHM",
+            coverageAmount: "10 SHM",
+            payoutAmount: "10 SHM",
             coverageDuration: "24 hours"
         }
     };
