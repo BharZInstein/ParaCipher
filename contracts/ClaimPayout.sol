@@ -23,7 +23,7 @@ interface IReputationScore {
 /**
  * @title ClaimPayout
  * @dev Handles accident claims and sends payouts to workers
- * For MVP: Manual approval by owner (later: Chainlink oracle automation)
+ * AUTO-APPROVES claims if coverage is valid (automated validation)
  */
 contract ClaimPayout {
     
@@ -37,8 +37,8 @@ contract ClaimPayout {
     // Reference to ReputationScore contract
     IReputationScore public reputationScore;
     
-    // Payout amount: 10 SHM (minimal for testing)
-    uint256 public constant PAYOUT_AMOUNT = 10 ether;
+    // Payout amount: 15 SHM (what customer receives when claim approved)
+    uint256 public constant PAYOUT_AMOUNT = 15 ether;
     
     // Total claims paid out
     uint256 public totalClaimsPaid;
@@ -62,9 +62,9 @@ contract ClaimPayout {
     /**
      * @dev Struct to track claim information
      */
-    struct Claim {
+        struct Claim {
         address worker;             // Worker who filed claim
-        uint256 requestedAmount;    // Amount requested (always 10 SHM)
+        uint256 requestedAmount;    // Amount requested (always 15 SHM)
         uint256 filedAt;            // Timestamp when claim was filed
         uint256 processedAt;        // Timestamp when claim was approved/rejected
         ClaimStatus status;         // Current status of claim
@@ -158,9 +158,10 @@ contract ClaimPayout {
     
     /**
      * @dev Worker files a claim for accident coverage
+     * AUTO-APPROVES if coverage is valid (automated validation)
      * @param notes Optional description of the accident
      */
-    function fileClaim(string memory notes) external {
+    function fileClaim(string memory notes) external noReentrant {
         address worker = msg.sender;
         
         // Check if worker has valid active coverage
@@ -176,17 +177,43 @@ contract ClaimPayout {
             "You already have a pending or approved claim"
         );
         
-        // Create new claim
+        // Check contract has enough balance for payout
+        require(
+            address(this).balance >= PAYOUT_AMOUNT,
+            "Insufficient funds in pool for payout"
+        );
+        
+        // AUTO-APPROVE: Since coverage is valid, automatically approve and payout
+        // Mark policy as claimed in InsurancePolicy contract
+        insurancePolicy.markAsClaimed(worker);
+        
+        // Create claim and immediately approve it
         claims[worker] = Claim({
             worker: worker,
             requestedAmount: PAYOUT_AMOUNT,
             filedAt: block.timestamp,
-            processedAt: 0,
-            status: ClaimStatus.Pending,
+            processedAt: block.timestamp,
+            status: ClaimStatus.Approved,
             notes: notes
         });
         
+        // Update stats
+        totalClaimsPaid += PAYOUT_AMOUNT;
+        totalClaimsProcessed++;
+        
+        // Deduct reputation score if reputation contract is set
+        if (address(reputationScore) != address(0)) {
+            reputationScore.deductForClaim(worker);
+        }
+        
         emit ClaimFiled(worker, PAYOUT_AMOUNT, block.timestamp, notes);
+        emit ClaimApproved(worker, PAYOUT_AMOUNT, block.timestamp);
+        
+        // Send payout to worker immediately
+        (bool success, ) = worker.call{value: PAYOUT_AMOUNT}("");
+        require(success, "Payout transfer failed");
+        
+        emit PayoutSent(worker, PAYOUT_AMOUNT, block.timestamp);
     }
     
     
@@ -318,7 +345,7 @@ contract ClaimPayout {
      * @dev Owner can fund the contract for payouts
      */
     function fundContract() external payable onlyOwner {
-        require(msg.value > 0, "Must send some MATIC");
+        require(msg.value > 0, "Must send some SHM");
     }
     
     

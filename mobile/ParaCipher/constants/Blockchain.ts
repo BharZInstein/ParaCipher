@@ -3,8 +3,11 @@
 
 export const BLOCKCHAIN_CONFIG = {
     // Contract Addresses (Deployed on Shardeum)
-    INSURANCE_POLICY_ADDRESS: "0x3A84E06554876A557b16249619247eF765C35407",
+    // NEW: InsurancePolicy with 6 hours coverage
+    INSURANCE_POLICY_ADDRESS: "0x0d66497f87B9D13dB37fd71BDdaf345A6c315492",
+    // Using old ClaimPayout (has 200 SHM ready) - new one not deployed yet
     CLAIM_PAYOUT_ADDRESS: "0xf678B23d7887d9c9dbc49C2170902d5c88075c2D",
+    // Using old ReputationScore - new one not deployed yet
     REPUTATION_SCORE_ADDRESS: "0x199678E7AF0B7a9f62523563f9eF861e242e944A",
 
     // Network Config
@@ -15,11 +18,11 @@ export const BLOCKCHAIN_CONFIG = {
     EXPLORER_URL: "https://explorer-mezame.shardeum.org",
     SYMBOL: "SHM",
 
-    // Amounts (in SHM)
+    // Amounts (in SHM) - MATCHING DEPLOYED CONTRACTS
     PREMIUM_AMOUNT: "5",     // What user pays for coverage
-    COVERAGE_AMOUNT: "15",   // What user is covered for
-    PAYOUT_AMOUNT: "15",     // What user gets if claim approved
-    COVERAGE_DURATION: 6     // Hours
+    COVERAGE_AMOUNT: "15",   // What user is covered for (NEW contract: 15 SHM, OLD: 150 SHM)
+    PAYOUT_AMOUNT: "150",    // What user gets if claim approved (OLD ClaimPayout: 150 SHM)
+    COVERAGE_DURATION: 6    // Hours (NEW InsurancePolicy: 6 hours ✅)
 };
 
 // Contract ABIs

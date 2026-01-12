@@ -17,13 +17,37 @@ export default function HomeScreen() {
   const { isConnected, provider } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleStartShift = () => {
-    if (!isConnected) {
+  const handleStartShift = async () => {
+    if (!isConnected || !provider) {
       Alert.alert("Not Connected", "Please connect your wallet from the Wallet tab first!");
       return;
     }
+    
+    setIsLoading(true);
     HapticFeedback.medium();
-    router.push('/shift/active');
+    
+    try {
+      // Wrap provider and get signer
+      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const signer = ethersProvider.getSigner();
+      
+      // Buy coverage (5 SHM)
+      const result = await InsurancePolicyService.buyCoverage(signer);
+      
+      if (result.success) {
+        Alert.alert(
+          "Coverage Activated! ✅",
+          "You're covered for 6 hours!\n\nTransaction: " + (result.txHash?.slice(0, 10) + "..."),
+          [{ text: "OK", onPress: () => router.push('/shift/active') }]
+        );
+      } else {
+        Alert.alert("Failed", result.error || "Could not buy coverage");
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to start shift");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 /**
  * @title InsurancePolicy
  * @dev Manages daily coverage purchases for gig workers
- * Workers pay 2 SHM for 24-hour coverage of 10 SHM
+ * Workers pay 5 SHM for 6-hour coverage of 15 SHM
  */
 contract InsurancePolicy {
     
@@ -12,14 +12,17 @@ contract InsurancePolicy {
     
     address public owner;
     
-    // Premium amount: 2 SHM (minimal for testing)
-    uint256 public constant PREMIUM_AMOUNT = 2 ether;
+    // Reference to ClaimPayout contract (the pool)
+    address public claimPayoutContract;
     
-    // Coverage amount: 10 SHM (minimal for testing)
-    uint256 public constant COVERAGE_AMOUNT = 10 ether;
+    // Premium amount: 5 SHM (what customer pays)
+    uint256 public constant PREMIUM_AMOUNT = 5 ether;
     
-    // Coverage duration: 24 hours
-    uint256 public constant COVERAGE_DURATION = 24 hours;
+    // Coverage amount: 15 SHM (maximum insured amount)
+    uint256 public constant COVERAGE_AMOUNT = 15 ether;
+    
+    // Coverage duration: 6 hours
+    uint256 public constant COVERAGE_DURATION = 6 hours;
     
     // Total premiums collected by contract
     uint256 public totalPremiumsCollected;
@@ -30,11 +33,11 @@ contract InsurancePolicy {
     /**
      * @dev Struct to store individual policy information
      */
-    struct Policy {
+        struct Policy {
         address workerAddress;      // Address of the worker
-        uint256 coverageAmount;     // Amount of coverage (10 SHM)
+        uint256 coverageAmount;     // Amount of coverage (15 SHM)
         uint256 startTime;          // When coverage started
-        uint256 endTime;            // When coverage expires (startTime + 24hrs)
+        uint256 endTime;            // When coverage expires (startTime + 6hrs)
         bool isActive;              // Is the policy currently active
         bool hasClaimed;            // Has the worker claimed this policy (prevents double claims)
     }
@@ -86,18 +89,27 @@ contract InsurancePolicy {
         owner = msg.sender;
     }
     
+    /**
+     * @dev Set the ClaimPayout contract address (called after deployment)
+     * Premiums will be forwarded to this contract (the pool)
+     */
+    function setClaimPayoutContract(address _claimPayoutAddress) external onlyOwner {
+        require(_claimPayoutAddress != address(0), "Invalid claim payout address");
+        claimPayoutContract = _claimPayoutAddress;
+    }
+    
     
     // ========== MAIN FUNCTIONS ==========
     
     /**
-     * @dev Worker buys daily coverage by paying 2 SHM
-     * Creates a 24-hour active policy with 10 SHM coverage
+     * @dev Worker buys daily coverage by paying 5 SHM
+     * Creates a 6-hour active policy with 15 SHM coverage
      */
     function buyDailyCoverage() external payable {
         // Check correct premium amount was sent
         require(
             msg.value == PREMIUM_AMOUNT,
-            "Must send exactly 2 SHM for coverage"
+            "Must send exactly 5 SHM for coverage"
         );
         
         // Check if worker already has an active policy
@@ -127,6 +139,12 @@ contract InsurancePolicy {
         
         // Track total premiums
         totalPremiumsCollected += msg.value;
+        
+        // Forward premium to ClaimPayout contract (the pool) if set
+        if (claimPayoutContract != address(0)) {
+            (bool success, ) = claimPayoutContract.call{value: msg.value}("");
+            require(success, "Failed to forward premium to pool");
+        }
         
         emit PolicyPurchased(msg.sender, COVERAGE_AMOUNT, startTime, endTime);
     }

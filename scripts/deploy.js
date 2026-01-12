@@ -15,7 +15,9 @@ async function main() {
     // ========== STEP 1: Deploy InsurancePolicy ==========
     console.log("📋 [1/5] Deploying InsurancePolicy...");
     const InsurancePolicy = await hre.ethers.getContractFactory("InsurancePolicy");
-    const insurancePolicy = await InsurancePolicy.deploy();
+    const insurancePolicy = await InsurancePolicy.deploy({
+        gasLimit: 2000000  // Lower gas limit for Shardeum
+    });
     await insurancePolicy.waitForDeployment();
     const insurancePolicyAddress = await insurancePolicy.getAddress();
     console.log("✅ InsurancePolicy deployed:", insurancePolicyAddress);
@@ -24,7 +26,9 @@ async function main() {
     console.log("\n📋 [2/5] Deploying ClaimPayout...");
     console.log("   ↳ Linking to InsurancePolicy:", insurancePolicyAddress);
     const ClaimPayout = await hre.ethers.getContractFactory("ClaimPayout");
-    const claimPayout = await ClaimPayout.deploy(insurancePolicyAddress);
+    const claimPayout = await ClaimPayout.deploy(insurancePolicyAddress, {
+        gasLimit: 2000000  // Lower gas limit for Shardeum
+    });
     await claimPayout.waitForDeployment();
     const claimPayoutAddress = await claimPayout.getAddress();
     console.log("✅ ClaimPayout deployed:", claimPayoutAddress);
@@ -32,7 +36,9 @@ async function main() {
     // ========== STEP 3: Deploy ReputationScore ==========
     console.log("\n📋 [3/5] Deploying ReputationScore...");
     const ReputationScore = await hre.ethers.getContractFactory("ReputationScore");
-    const reputationScore = await ReputationScore.deploy();
+    const reputationScore = await ReputationScore.deploy({
+        gasLimit: 2000000  // Lower gas limit for Shardeum
+    });
     await reputationScore.waitForDeployment();
     const reputationScoreAddress = await reputationScore.getAddress();
     console.log("✅ ReputationScore deployed:", reputationScoreAddress);
@@ -40,8 +46,11 @@ async function main() {
     // ========== STEP 4: Connect Contracts ==========
     console.log("\n🔗 [4/5] Connecting contracts...");
     console.log("   ↳ Linking ReputationScore to ClaimPayout...");
-    const linkTx = await claimPayout.setReputationContract(reputationScoreAddress);
-    await linkTx.wait();
+    const linkTx1 = await claimPayout.setReputationContract(reputationScoreAddress);
+    await linkTx1.wait();
+    console.log("   ↳ Linking ClaimPayout to InsurancePolicy (for premium forwarding)...");
+    const linkTx2 = await insurancePolicy.setClaimPayoutContract(claimPayoutAddress);
+    await linkTx2.wait();
     console.log("✅ Contracts connected successfully");
 
     // ========== STEP 5: Fund ClaimPayout ==========
@@ -62,7 +71,10 @@ async function main() {
         console.log("   ↳ Required:", ethers.formatEther(fundingAmount), currencySymbol);
     }
 
-    const fundTx = await claimPayout.fundContract({ value: fundingAmount });
+    const fundTx = await claimPayout.fundContract({ 
+        value: fundingAmount,
+        gasLimit: 500000  // Explicit gas limit for funding
+    });
     await fundTx.wait();
 
     const claimBalance = await ethers.provider.getBalance(claimPayoutAddress);
@@ -102,10 +114,10 @@ async function main() {
             ReputationScore: reputationScoreAddress
         },
         constants: {
-            premiumAmount: "2 SHM",
-            coverageAmount: "10 SHM",
-            payoutAmount: "10 SHM",
-            coverageDuration: "24 hours"
+            premiumAmount: "5 SHM",
+            coverageAmount: "15 SHM",
+            payoutAmount: "15 SHM",
+            coverageDuration: "6 hours"
         }
     };
 
