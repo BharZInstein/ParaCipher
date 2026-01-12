@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { WalletProvider } from '@/context/WalletContext';
 import {
@@ -38,8 +39,8 @@ export default function RootLayout() {
   }
 
   return (
-    <CurrencyProvider>
-      <WalletProvider>
+    <WalletProvider>
+      <CurrencyProvider>
         <ThemeProvider value={DarkTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
@@ -48,7 +49,7 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style="light" />
         </ThemeProvider>
-      </WalletProvider>
-    </CurrencyProvider>
+      </CurrencyProvider>
+    </WalletProvider>
   );
 }

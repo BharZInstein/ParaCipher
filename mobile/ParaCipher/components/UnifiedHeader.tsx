@@ -1,4 +1,4 @@
-import { Colors, Typography } from '@/constants/Theme';
+import { Colors, Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';

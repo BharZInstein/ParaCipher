@@ -28,8 +28,11 @@ describe("ParaCipher E2E Tests", function () {
         // Connect contracts
         await claimPayout.setReputationContract(await reputationScore.getAddress());
 
-        // Fund ClaimPayout
-        await claimPayout.fundContract({ value: ethers.parseEther("100000") });
+        // Fund ClaimPayout directly (NOT using fundContract function)
+        await owner.sendTransaction({
+            to: await claimPayout.getAddress(),
+            value: ethers.parseEther("100") // 200k MATIC for tests
+        });
     });
 
     describe("InsurancePolicy", function () {
@@ -40,7 +43,7 @@ describe("ParaCipher E2E Tests", function () {
 
             const [isActive, coverage] = await insurancePolicy.connect(worker1).checkMyCoverage();
             expect(isActive).to.be.true;
-            expect(coverage).to.equal(ethers.parseEther("50000"));
+            expect(coverage).to.equal(ethers.parseEther("50"));
         });
 
         it("Should reject incorrect premium amount", async function () {
@@ -91,7 +94,7 @@ describe("ParaCipher E2E Tests", function () {
 
             const [status, amount, , notes] = await claimPayout.connect(worker1).getMyClaimStatus();
             expect(status).to.equal(1); // Pending
-            expect(amount).to.equal(ethers.parseEther("50000"));
+            expect(amount).to.equal(ethers.parseEther("50"));
             expect(notes).to.equal("Test accident");
         });
 
@@ -108,7 +111,7 @@ describe("ParaCipher E2E Tests", function () {
             await claimPayout.connect(owner).approveClaim(worker1.address);
             const balanceAfter = await ethers.provider.getBalance(worker1.address);
 
-            expect(balanceAfter - balanceBefore).to.equal(ethers.parseEther("50000"));
+            expect(balanceAfter - balanceBefore).to.equal(ethers.parseEther("50"));
         });
 
         it("Should prevent double claims", async function () {
@@ -204,7 +207,7 @@ describe("ParaCipher E2E Tests", function () {
             // 2. Check coverage is active
             const [isActive, coverage] = await insurancePolicy.connect(worker1).checkMyCoverage();
             expect(isActive).to.be.true;
-            expect(coverage).to.equal(ethers.parseEther("50000"));
+            expect(coverage).to.equal(ethers.parseEther("50"));
 
             // 3. File claim
             await claimPayout.connect(worker1).fileClaim("Accident on highway");
@@ -215,7 +218,7 @@ describe("ParaCipher E2E Tests", function () {
             const balanceAfter = await ethers.provider.getBalance(worker1.address);
 
             // 5. Verify payout received
-            expect(balanceAfter - balanceBefore).to.equal(ethers.parseEther("50000"));
+            expect(balanceAfter - balanceBefore).to.equal(ethers.parseEther("50"));
 
             // 6. Verify reputation decreased
             const [score] = await reputationScore.connect(worker1).getMyScore();

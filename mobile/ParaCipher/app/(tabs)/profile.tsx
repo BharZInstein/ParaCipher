@@ -1,6 +1,6 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';

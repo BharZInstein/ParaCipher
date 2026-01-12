@@ -1,9 +1,11 @@
-import { Colors, Typography } from '@/constants/Theme';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { Colors, Typography } from '@/constants/theme';
+import { useWallet } from '@/context/WalletContext';
+import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
 import { useRootNavigationState, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Dimensions, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -146,42 +148,54 @@ export default function LoginScreen() {
     const router = useRouter();
     const rootNavigationState = useRootNavigationState();
     const insets = useSafeAreaInsets();
+    const { connectWallet, isConnected, address } = useWallet();
+
     const [isLoading, setIsLoading] = useState(false);
     const [isBiometricSupported, setIsBiometricSupported] = useState(false);
-    const [isLocked, setIsLocked] = useState(false);
+    const [isOnboarded, setIsOnboarded] = useState(false);
 
     useEffect(() => {
-        // Wait for navigation to be ready
         if (!rootNavigationState?.key) return;
 
         (async () => {
+            // Check Biometric Support
             const compatible = await LocalAuthentication.hasHardwareAsync();
             const enrolled = await LocalAuthentication.isEnrolledAsync();
             const hasBio = compatible && enrolled;
-
             setIsBiometricSupported(hasBio);
 
-            // Check Settings
-            let isAppLockEnabled = true; // Default true
-            try {
-                const savedLock = await AsyncStorage.getItem('isAppLockEnabled');
-                if (savedLock !== null) {
-                    isAppLockEnabled = JSON.parse(savedLock);
-                }
-            } catch (e) {
-                console.warn('Failed to read settings');
-            }
+            // Check if Onboarded (Address exists in storage)
+            const storedAddress = await SecureStore.getItemAsync('wallet_address');
 
-            // Only lock if bio is available AND enabled in settings
-            if (hasBio && isAppLockEnabled) {
-                setIsLocked(true);
-                // Auto-prompt after a short delay
-                setTimeout(() => {
-                    handleBiometricAuth(true);
-                }, 500);
+            // Check App Lock Preference (Default to true)
+            const appLockPref = await AsyncStorage.getItem('isAppLockEnabled');
+            const isAppLockEnabled = appLockPref === null ? true : JSON.parse(appLockPref);
+
+            if (storedAddress) {
+                setIsOnboarded(true);
+
+                if (isAppLockEnabled) {
+                    // Auto-prompt unlock if biometric available and onboarded
+                    if (hasBio) {
+                        setTimeout(() => handleBiometricAuth(true), 500);
+                    }
+                } else {
+                    // App Lock Disabled -> Auto Login
+                    handleLogin(true);
+                }
+            } else {
+                setIsOnboarded(false);
             }
         })();
     }, [rootNavigationState?.key]);
+
+    // Watch for connection success during initial onboarding
+    useEffect(() => {
+        if (isConnected && address && !isOnboarded) {
+            // User just connected wallet -> Proceed to app
+            handleLogin(true);
+        }
+    }, [isConnected, address]);
 
     const handleBiometricAuth = async (isAuto = false) => {
         try {
@@ -216,8 +230,14 @@ export default function LoginScreen() {
         }, delay);
     };
 
-    const handleReset = () => {
-        setIsLocked(false);
+    const handleConnect = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        connectWallet();
+    };
+
+    const handleReset = async () => {
+        await SecureStore.deleteItemAsync('wallet_address');
+        setIsOnboarded(false);
     };
 
     if (isLoading) {
@@ -276,8 +296,8 @@ export default function LoginScreen() {
                     </View>
                 </View>
 
-                {/* Feature Grid - Only show if NOT locked (Setup Mode) */}
-                {!isLocked && (
+                {/* Feature Grid - Only show during Setup */}
+                {!isOnboarded && (
                     <View style={styles.gridContainer}>
                         <View style={styles.gridItem}>
                             <Text style={styles.gridLabel}>GAS_FEES</Text>
@@ -295,9 +315,9 @@ export default function LoginScreen() {
                 )}
 
                 {/* Locked Message */}
-                {isLocked && (
+                {isOnboarded && (
                     <View style={styles.lockedMessageContainer}>
-                        <Text style={styles.lockedMessage}>APP LOCKED · AUTHENTICATION REQUIRED</Text>
+                        <Text style={styles.lockedMessage}>SESSION SECURED · AUTHENTICATION REQUIRED</Text>
                     </View>
                 )}
             </View>
@@ -305,8 +325,8 @@ export default function LoginScreen() {
             {/* Footer Actions */}
             <View style={styles.footer}>
 
-                {/* APP LOCK STATE */}
-                {isLocked && (
+                {/* APP LOCKED / ONBOARDED STATE */}
+                {isOnboarded && (
                     <>
                         <TouchableOpacity style={styles.btnBiometric} onPress={() => handleBiometricAuth(false)} activeOpacity={0.8}>
                             <MaterialIcons name="fingerprint" size={24} color={Colors.primary} />
@@ -314,33 +334,29 @@ export default function LoginScreen() {
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.btnReset} onPress={handleReset}>
-                            <Text style={styles.btnResetText}>[ SWITCH WALLET / RESET ]</Text>
+                            <Text style={styles.btnResetText}>[ DISCONNECT / RESET ]</Text>
                         </TouchableOpacity>
                     </>
                 )}
 
-                {/* SETUP STATE */}
-                {!isLocked && (
+                {/* SETUP / CONNECT STATE */}
+                {!isOnboarded && (
                     <>
-                        <TouchableOpacity style={styles.btnApple} onPress={() => handleLogin(false)} activeOpacity={0.8}>
-                            <FontAwesome name="apple" size={20} color="black" />
-                            <Text style={styles.btnAppleText}>CONNECT WITH APPLE</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.btnGoogle} onPress={() => handleLogin(false)} activeOpacity={0.8}>
-                            <FontAwesome name="google" size={18} color="white" />
-                            <Text style={styles.btnGoogleText}>CONNECT WITH GOOGLE</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.btnPhone} onPress={() => handleLogin(false)}>
-                            <Text style={styles.btnPhoneText}>[ USE PHONE NUMBER ]</Text>
+                        <TouchableOpacity style={styles.btnConnect} onPress={handleConnect} activeOpacity={0.8}>
+                            <Image
+                                source={{ uri: "https://walletconnect.org/walletconnect-logo.png" }}
+                                style={{ width: 24, height: 24, display: 'none' }} // Placeholder if local asset missing
+                            />
+                            <MaterialIcons name="account-balance-wallet" size={20} color="black" />
+                            <Text style={styles.btnConnectText}>CONNECT WALLET</Text>
                         </TouchableOpacity>
                     </>
                 )}
 
                 <View style={styles.legalContainer}>
                     <Text style={styles.legalText}>
-                        By accessing the protocol you agree to our Terms and Privacy.
+                        By connecting your wallet you agree to our Terms and Privacy.
+                        Powered by WalletConnect.
                     </Text>
                 </View>
             </View>
@@ -368,7 +384,6 @@ const styles = StyleSheet.create({
         borderColor: Colors.gridLine,
         justifyContent: 'center',
         alignItems: 'center',
-        // marginBottom removed as it's handled by parent ringContainer
         backgroundColor: Colors.surfaceHighlight,
     },
     loadingTitle: {
@@ -663,45 +678,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         letterSpacing: 1,
     },
-    btnApple: {
+    btnConnect: {
         height: 56,
-        backgroundColor: 'white',
+        backgroundColor: Colors.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
+        borderRadius: 4, // Keep square-ish aesthetic
     },
-    btnAppleText: {
+    btnConnectText: {
         fontFamily: Typography.fontFamily.displayBold,
         color: 'black',
         fontSize: 14,
         letterSpacing: 0.5,
-    },
-    btnGoogle: {
-        height: 56,
-        backgroundColor: Colors.surfaceDark,
-        borderWidth: 1,
-        borderColor: Colors.gridLine,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 12,
-    },
-    btnGoogleText: {
-        fontFamily: Typography.fontFamily.displayBold,
-        color: 'white',
-        fontSize: 14,
-        letterSpacing: 0.5,
-    },
-    btnPhone: {
-        height: 48,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    btnPhoneText: {
-        fontFamily: Typography.fontFamily.mono,
-        color: Colors.gray400,
-        fontSize: 13,
     },
     legalContainer: {
         marginTop: 12,

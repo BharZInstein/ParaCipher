@@ -1,47 +1,53 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Colors, Typography } from '@/constants/Theme';
+import { Colors, Typography } from '@/constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function SupportScreen() {
     return (
         <View style={styles.container}>
             <TechBackground />
-            <UnifiedHeader title="Help & Support" showBack />
+            <UnifiedHeader title="SUPPORT" subtitle="HELP CENTER" showBack />
 
-            <View style={styles.content}>
-                <View style={styles.card}>
-                    <MaterialIcons name="support-agent" size={48} color={Colors.primary} />
-                    <Text style={styles.title}>How can we help?</Text>
-                    <Text style={styles.desc}>
-                        Our support team is available 24/7 to assist you with any issues related to shifts, payouts, or account security.
-                    </Text>
-                </View>
+            <ScrollView contentContainerStyle={styles.content}>
 
-                <TouchableOpacity style={styles.contactBtn}>
-                    <MaterialIcons name="chat" size={24} color="black" />
-                    <Text style={styles.contactBtnText}>Start Live Chat</Text>
+                <TouchableOpacity style={styles.card} onPress={() => Linking.openURL('https://paracipher.app/faq')}>
+                    <View style={styles.iconBox}>
+                        <MaterialIcons name="menu-book" size={24} color={Colors.primary} />
+                    </View>
+                    <View style={styles.cardText}>
+                        <Text style={styles.title}>Documentation</Text>
+                        <Text style={styles.subtitle}>Read guides and integration docs</Text>
+                    </View>
+                    <MaterialIcons name="open-in-new" size={16} color={Colors.gray600} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryBtn}>
-                    <MaterialIcons name="email" size={24} color="white" />
-                    <Text style={styles.secondaryBtnText}>Email Support</Text>
+                <TouchableOpacity style={styles.card} onPress={() => Linking.openURL('mailto:support@paracipher.app')}>
+                    <View style={styles.iconBox}>
+                        <MaterialIcons name="email" size={24} color={Colors.primary} />
+                    </View>
+                    <View style={styles.cardText}>
+                        <Text style={styles.title}>Email Support</Text>
+                        <Text style={styles.subtitle}>Get help via email</Text>
+                    </View>
+                    <MaterialIcons name="arrow-forward-ios" size={12} color={Colors.gray600} />
                 </TouchableOpacity>
 
-                <View style={styles.faqSection}>
-                    <Text style={styles.sectionTitle}>FAQ</Text>
-                    <TouchableOpacity style={styles.faqItem}>
-                        <Text style={styles.faqText}>How are payouts calculated?</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={Colors.gray500} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.faqItem}>
-                        <Text style={styles.faqText}>What is the coverage limit?</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={Colors.gray500} />
-                    </TouchableOpacity>
-                </View>
-            </View>
+                <TouchableOpacity style={styles.card} onPress={() => Linking.openURL('https://discord.gg/paracipher')}>
+                    <View style={styles.iconBox}>
+                        <MaterialIcons name="chat" size={24} color={Colors.primary} />
+                    </View>
+                    <View style={styles.cardText}>
+                        <Text style={styles.title}>Community Chat</Text>
+                        <Text style={styles.subtitle}>Join our Discord server</Text>
+                    </View>
+                    <MaterialIcons name="open-in-new" size={16} color={Colors.gray600} />
+                </TouchableOpacity>
+
+            </ScrollView>
         </View>
     );
 }
@@ -53,78 +59,38 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
-        gap: 16,
     },
     card: {
-        backgroundColor: Colors.surfaceCard,
-        padding: 24,
-        borderRadius: 20,
+        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: Colors.surfaceCard,
+        padding: 20,
+        borderRadius: 16,
+        marginBottom: 16,
         borderWidth: 1,
         borderColor: Colors.surfaceBorder,
-        marginBottom: 8,
+    },
+    iconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    cardText: {
+        flex: 1,
     },
     title: {
         color: 'white',
         fontFamily: Typography.fontFamily.displayBold,
-        fontSize: 18,
-        marginTop: 16,
-        marginBottom: 8,
+        fontSize: 16,
     },
-    desc: {
-        color: Colors.gray400,
-        fontFamily: Typography.fontFamily.display,
-        fontSize: 14,
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-    contactBtn: {
-        backgroundColor: Colors.primary,
-        padding: 16,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 12,
-    },
-    contactBtnText: {
-        color: 'black',
-        fontFamily: Typography.fontFamily.displayBold,
-        textTransform: 'uppercase',
-    },
-    secondaryBtn: {
-        backgroundColor: Colors.surfaceHighlight,
-        padding: 16,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 12,
-        borderWidth: 1,
-        borderColor: Colors.surfaceBorder,
-    },
-    secondaryBtnText: {
-        color: 'white',
-        fontFamily: Typography.fontFamily.displayBold,
-        textTransform: 'uppercase',
-    },
-    faqSection: {
-        marginTop: 24,
-    },
-    sectionTitle: {
-        color: Colors.gray500,
+    subtitle: {
+        color: Colors.gray600,
         fontFamily: Typography.fontFamily.mono,
-        marginBottom: 12,
-    },
-    faqItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.surfaceBorder,
-    },
-    faqText: {
-        color: 'white',
-        fontFamily: Typography.fontFamily.displayMedium,
+        fontSize: 12,
+        marginTop: 4,
     },
 });

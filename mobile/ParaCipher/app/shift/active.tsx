@@ -1,6 +1,6 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -522,5 +522,10 @@ const styles = StyleSheet.create({
         color: '#ef4444',
         letterSpacing: 1,
         fontWeight: '700',
+    },
+    dot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
     },
 });

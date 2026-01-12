@@ -1,5 +1,5 @@
 import TechBackground from '@/components/TechBackground';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -23,7 +23,7 @@ const WalletTheme = {
 import { useWallet } from '@/context/WalletContext';
 
 export default function WalletScreen() {
-    const { isConnected, connectWallet, balance } = useWallet();
+    const { isConnected, connectWallet, balance, address } = useWallet();
 
     return (
         <SafeAreaView style={styles.container}>
@@ -47,13 +47,14 @@ export default function WalletScreen() {
                         <MaterialIcons name="account-balance-wallet" size={48} color={WalletTheme.primary} />
                     </View>
                     <Text style={styles.connectTitle}>Connect Wallet</Text>
-                    <Text style={styles.connectDesc}>Link your crypto wallet to access insurance coverage and claims.</Text>
+                    <Text style={styles.connectDesc}>Link your MetaMask wallet to access insurance coverage and claims.</Text>
 
                     <TouchableOpacity
                         style={styles.connectBtn}
-                        onPress={() => {
+                        onPress={async () => {
                             HapticFeedback.light();
-                            connectWallet();
+                            console.log('[WalletScreen] Connect button pressed');
+                            await connectWallet();
                         }}
                     >
                         <Text style={styles.connectBtnText}>CONNECT WALLET</Text>
@@ -74,20 +75,28 @@ export default function WalletScreen() {
                                 </View>
                                 <Text style={styles.statusText}>PROTECTION ACTIVE</Text>
                             </View>
+                            {address && (
+                                <View style={[styles.statusPill, { marginTop: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderLeftColor: '#6b7280' }]}>
+                                    <MaterialIcons name="account-balance-wallet" size={14} color="#9ca3af" />
+                                    <Text style={[styles.statusText, { color: '#9ca3af', letterSpacing: 1 }]}>
+                                        {`${address.substring(0, 6)}...${address.substring(address.length - 4)}`}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
+
+                        
 
                         {/* Balance Section */}
                         <View style={styles.balanceSection}>
                             <Text style={styles.balanceLabel}>Total Balance</Text>
-                            <View style={styles.balanceRow}>
-                                <Text style={styles.currencySymbol}>$</Text>
-                                <Text style={styles.balanceValue}>1,240.50</Text>
-                            </View>
+                            <Text style={styles.balanceValue}>{balance}</Text>
+                            <Text style={[styles.currencySymbol, { marginLeft: 8, fontSize: 20, alignSelf: 'flex-end', marginBottom: 6 }]}>ETH</Text>
 
                             <View style={styles.balanceMetaRow}>
                                 <View style={styles.trendPill}>
                                     <MaterialIcons name="trending-up" size={16} color={WalletTheme.primary} />
-                                    <Text style={styles.trendText}>+$12.45</Text>
+                                    <Text style={styles.trendText}>+0.00%</Text>
                                 </View>
                                 <View style={styles.yieldBadge}>
                                     <Text style={styles.yieldText}>+3.5% YIELD</Text>
@@ -109,13 +118,19 @@ export default function WalletScreen() {
                                     style={styles.actionBtn}
                                     onPress={() => {
                                         HapticFeedback.light();
-                                        router.push('/wallet/deposit'); // Using deposit for withdraw for now as generic 'Transfer'
+                                        router.push('/wallet/withdraw');
                                     }}
                                 >
                                     <MaterialIcons name="arrow-outward" size={24} color="white" />
                                     <Text style={styles.actionBtnText}>Withdraw</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.actionBtn}>
+                                <TouchableOpacity
+                                    style={styles.actionBtn}
+                                    onPress={() => {
+                                        HapticFeedback.light();
+                                        router.push('/wallet/swap');
+                                    }}
+                                >
                                     <MaterialIcons name="swap-horiz" size={24} color="white" />
                                     <Text style={styles.actionBtnText}>Swap</Text>
                                 </TouchableOpacity>
@@ -126,7 +141,13 @@ export default function WalletScreen() {
                         <View style={styles.activitySection}>
                             <View style={styles.sectionHeader}>
                                 <Text style={styles.sectionTitle}>ACTIVITY LOG</Text>
-                                <TouchableOpacity style={styles.viewAllBtn}>
+                                <TouchableOpacity
+                                    style={styles.viewAllBtn}
+                                    onPress={() => {
+                                        HapticFeedback.light();
+                                        router.push('/wallet/activity');
+                                    }}
+                                >
                                     <Text style={styles.viewAllText}>VIEW ALL</Text>
                                     <MaterialIcons name="chevron-right" size={16} color="#6b7280" />
                                 </TouchableOpacity>
@@ -136,49 +157,48 @@ export default function WalletScreen() {
 
                                 {/* Item 1 */}
                                 <View style={styles.activityItem}>
-                                    {/* Tech Corners Items */}
                                     <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary }]} />
                                     <View style={[styles.cornerItem, { bottom: 0, right: 0, borderBottomWidth: 1, borderRightWidth: 1, borderColor: WalletTheme.primary }]} />
 
                                     <View style={styles.itemLeft}>
                                         <View style={styles.iconBox}>
-                                            <MaterialIcons name="shield" size={20} color="#9ca3af" />
+                                            <MaterialIcons name="arrow-downward" size={20} color="#9ca3af" />
                                         </View>
                                         <View>
-                                            <Text style={styles.itemTitle}>Uber Eats Gig</Text>
-                                            <Text style={styles.itemSub}>09:41 AM <Text style={{ color: '#333' }}>|</Text> COVERED</Text>
+                                            <Text style={styles.itemTitle}>Received ETH</Text>
+                                            <Text style={styles.itemSub}>Today, 10:23 AM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.amountNegative}>-$2.50</Text>
+                                    <Text style={styles.amountPositive}>+0.45 ETH</Text>
                                 </View>
 
                                 {/* Item 2 */}
                                 <View style={styles.activityItem}>
                                     <View style={[styles.cornerItem, { top: 0, left: 0, borderTopWidth: 1, borderLeftWidth: 1, borderColor: WalletTheme.primary, opacity: 0.5 }]} />
                                     <View style={styles.itemLeft}>
-                                        <View style={[styles.iconBox, { borderColor: WalletTheme.primary }]}>
-                                            <MaterialIcons name="trending-up" size={20} color={WalletTheme.primary} />
+                                        <View style={styles.iconBox}>
+                                            <MaterialIcons name="arrow-upward" size={20} color="#9ca3af" />
                                         </View>
                                         <View>
-                                            <Text style={[styles.itemTitle, { color: 'white' }]}>Yield Earned</Text>
-                                            <Text style={styles.itemSub}>YESTERDAY <Text style={{ color: '#333' }}>|</Text> AUTO</Text>
+                                            <Text style={styles.itemTitle}>Sent to 0x4d...2a</Text>
+                                            <Text style={styles.itemSub}>Yesterday, 04:15 PM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.amountPositive}>+$0.85</Text>
+                                    <Text style={styles.amountNegative}>-0.12 ETH</Text>
                                 </View>
 
                                 {/* Item 3 */}
                                 <View style={[styles.activityItem, { opacity: 0.8 }]}>
                                     <View style={styles.itemLeft}>
                                         <View style={styles.iconBox}>
-                                            <MaterialIcons name="account-balance" size={20} color="#6b7280" />
+                                            <MaterialIcons name="swap-horiz" size={20} color="#9ca3af" />
                                         </View>
                                         <View>
-                                            <Text style={styles.itemTitle}>Bank Transfer</Text>
-                                            <Text style={styles.itemSub}>OCT 24 <Text style={{ color: '#333' }}>|</Text> COMPLETED</Text>
+                                            <Text style={styles.itemTitle}>Swap ETH for USDC</Text>
+                                            <Text style={styles.itemSub}>Oct 24, 09:30 AM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={[styles.amountPositive, { color: 'white' }]}>+$200.00</Text>
+                                    <Text style={styles.amountNegative}>-1.50 ETH</Text>
                                 </View>
 
                             </View>
@@ -571,5 +591,37 @@ const styles = StyleSheet.create({
         fontFamily: Typography.fontFamily.displayBold,
         fontSize: 12,
         textTransform: 'uppercase',
+    },
+    addressSection: {
+        marginTop: 24,
+        marginBottom: 16,
+        padding: 16,
+        backgroundColor: 'rgba(204, 255, 0, 0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(204, 255, 0, 0.2)',
+        borderRadius: 12,
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    addressDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: WalletTheme.primary,
+    },
+    addressLabel: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 12,
+        color: '#9ca3af',
+        letterSpacing: 0.5,
+    },
+    addressValue: {
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 14,
+        color: WalletTheme.primary,
+        fontWeight: '700',
     },
 });

@@ -1,6 +1,22 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ethers } from 'ethers';
+import { WalletConnectModal, useWalletConnectModal } from '@walletconnect/modal-react-native';
+import * as Linking from 'expo-linking';
+import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
+
+const projectId = process.env.EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'b56e18d47c72ab683b10814fe9495694'; // Free Demo ID for testing
+
+const providerMetadata = {
+    name: 'ParaCipher',
+    description: 'Decentralized Parametric Insurance',
+    url: 'https://paracipher.app',
+    icons: ['https://your-project-logo.com/logo.png'],
+    redirect: {
+        native: Linking.createURL(''),
+        universal: 'paracipher.app'
+    }
+};
 
 interface WalletContextType {
     isConnected: boolean;
@@ -19,53 +35,68 @@ const WalletContext = createContext<WalletContextType>({
 });
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
-    const [isConnected, setIsConnected] = useState(false);
-    const [address, setAddress] = useState<string | null>(null);
-    const [balance, setBalance] = useState('0.00');
+    const { open, isConnected: isWCConnected, address: wcAddress, provider: wcProvider } = useWalletConnectModal();
+    const [balance, setBalance] = useState('0.00'); // Default to 0.00 instead of mock value
 
-    // Load persisted state
+    // Sync WalletConnect state with local state if needed, or just use WC state directly
+    // logic: if WC is connected, we are connected.
+
     useEffect(() => {
-        loadWalletState();
-    }, []);
+        const fetchBalance = async () => {
+            if (isWCConnected && wcAddress && wcProvider) {
+                try {
+                    // Save address to secure storage
+                    await SecureStore.setItemAsync('wallet_address', wcAddress);
 
-    const loadWalletState = async () => {
-        try {
-            const storedAddress = await AsyncStorage.getItem('wallet_address');
-            if (storedAddress) {
-                setAddress(storedAddress);
-                setIsConnected(true);
-                setBalance('1,240.50'); // Mock balance
+                    // Create Ethers Provider from WalletConnect Provider
+                    const ethersProvider = new ethers.providers.Web3Provider(wcProvider);
+
+                    // Fetch Balance
+                    console.log("Fetching balance for:", wcAddress);
+                    const rawBalance = await ethersProvider.getBalance(wcAddress);
+                    console.log("Raw Balance:", rawBalance.toString());
+                    const formattedBalance = ethers.utils.formatEther(rawBalance);
+
+                    // Format to display (e.g. 0.0050)
+                    const displayBalance = parseFloat(formattedBalance).toFixed(4);
+                    console.log("Display Balance:", displayBalance);
+                    setBalance(displayBalance);
+                } catch (error) {
+                    console.error("Failed to fetch balance:", error);
+                    setBalance('0.00'); // Fallback to 0
+                }
             }
-        } catch (e) {
-            console.error("Failed to load wallet state", e);
-        }
-    };
+        };
+
+        fetchBalance();
+    }, [isWCConnected, wcAddress, wcProvider]);
 
     const connectWallet = async () => {
-        // Simulate connection delay
-        return new Promise<void>((resolve) => {
-            setTimeout(async () => {
-                const mockAddress = "0x71C...9A23";
-                setAddress(mockAddress);
-                setIsConnected(true);
-                setBalance('1,240.50');
-                await AsyncStorage.setItem('wallet_address', mockAddress);
-                Alert.alert("Wallet Connected", "Successfully connected to ParaCipher Wallet");
-                resolve();
-            }, 1000);
-        });
+        if (isWCConnected) return;
+        await open();
     };
 
     const disconnectWallet = async () => {
-        setAddress(null);
-        setIsConnected(false);
+        if (wcProvider) {
+            await wcProvider.disconnect();
+        }
+        await SecureStore.deleteItemAsync('wallet_address');
         setBalance('0.00');
-        await AsyncStorage.removeItem('wallet_address');
     };
 
     return (
-        <WalletContext.Provider value={{ isConnected, address, balance, connectWallet, disconnectWallet }}>
+        <WalletContext.Provider value={{
+            isConnected: isWCConnected,
+            address: wcAddress || null,
+            balance,
+            connectWallet,
+            disconnectWallet
+        }}>
             {children}
+            <WalletConnectModal
+                projectId={projectId}
+                providerMetadata={providerMetadata}
+            />
         </WalletContext.Provider>
     );
 };

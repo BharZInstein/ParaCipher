@@ -1,6 +1,6 @@
 import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
-import { Colors, Typography } from '@/constants/Theme';
+import { Colors, Typography } from '@/constants/theme';
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 

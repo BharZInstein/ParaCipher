@@ -1,5 +1,5 @@
 import TechBackground from '@/components/TechBackground';
-import { Typography } from '@/constants/Theme';
+import { Typography } from '@/constants/theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
