@@ -3,8 +3,8 @@ import { Typography } from '@/constants/theme';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
-import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import UnifiedHeader from '@/components/UnifiedHeader';
@@ -23,7 +23,28 @@ const WalletTheme = {
 import { useWallet } from '@/context/WalletContext';
 
 export default function WalletScreen() {
-    const { isConnected, connectWallet, balance, address } = useWallet();
+    const { isConnected, connectWallet, balance, address, switchNetwork, chainId } = useWallet();
+
+    const [isSwitching, setIsSwitching] = useState(false);
+
+    const currency = chainId === 8119 ? 'SHM' : 'ETH';
+
+    const toggleCurrency = async () => {
+        if (isSwitching) return;
+        HapticFeedback.light();
+        setIsSwitching(true);
+        try {
+            if (chainId === 8119) {
+                // Switch to Ethereum Mainnet (or appropriate default)
+                await switchNetwork(1);
+            } else {
+                // Switch to Shardeum Mezame Testnet
+                await switchNetwork(8119);
+            }
+        } finally {
+            setIsSwitching(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -85,13 +106,21 @@ export default function WalletScreen() {
                             )}
                         </View>
 
-                        
+
 
                         {/* Balance Section */}
                         <View style={styles.balanceSection}>
                             <Text style={styles.balanceLabel}>Total Balance</Text>
                             <Text style={styles.balanceValue}>{balance}</Text>
-                            <Text style={[styles.currencySymbol, { marginLeft: 8, fontSize: 20, alignSelf: 'flex-end', marginBottom: 6 }]}>ETH</Text>
+                            <TouchableOpacity onPress={toggleCurrency} disabled={isSwitching}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, alignSelf: 'flex-end', marginBottom: 6 }}>
+                                    {isSwitching ? (
+                                        <ActivityIndicator size="small" color={WalletTheme.primary} />
+                                    ) : (
+                                        <Text style={[styles.currencySymbol, { fontSize: 20 }]}>{currency}</Text>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
 
                             <View style={styles.balanceMetaRow}>
                                 <View style={styles.trendPill}>
@@ -165,11 +194,11 @@ export default function WalletScreen() {
                                             <MaterialIcons name="arrow-downward" size={20} color="#9ca3af" />
                                         </View>
                                         <View>
-                                            <Text style={styles.itemTitle}>Received ETH</Text>
+                                            <Text style={styles.itemTitle}>Received {currency}</Text>
                                             <Text style={styles.itemSub}>Today, 10:23 AM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.amountPositive}>+0.45 ETH</Text>
+                                    <Text style={styles.amountPositive}>+0.45 {currency}</Text>
                                 </View>
 
                                 {/* Item 2 */}
@@ -184,7 +213,7 @@ export default function WalletScreen() {
                                             <Text style={styles.itemSub}>Yesterday, 04:15 PM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.amountNegative}>-0.12 ETH</Text>
+                                    <Text style={styles.amountNegative}>-0.12 {currency}</Text>
                                 </View>
 
                                 {/* Item 3 */}
@@ -194,11 +223,11 @@ export default function WalletScreen() {
                                             <MaterialIcons name="swap-horiz" size={20} color="#9ca3af" />
                                         </View>
                                         <View>
-                                            <Text style={styles.itemTitle}>Swap ETH for USDC</Text>
+                                            <Text style={styles.itemTitle}>Swap {currency} for USDC</Text>
                                             <Text style={styles.itemSub}>Oct 24, 09:30 AM <Text style={{ color: '#4ade80' }}>| Confirmed</Text></Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.amountNegative}>-1.50 ETH</Text>
+                                    <Text style={styles.amountNegative}>-1.50 {currency}</Text>
                                 </View>
 
                             </View>
