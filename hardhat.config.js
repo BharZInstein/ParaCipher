@@ -46,6 +46,18 @@ module.exports = {
             chainId: 137,
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
             gasPrice: 50000000000 // 50 gwei
+        },
+
+        // Shardeum EVM Testnet (Mezame)
+        shardeum: {
+            url: process.env.SHARDEUM_RPC_URL || "https://api-mezame.shardeum.org",
+            chainId: 8119,
+            accounts: process.env.SHARDEUM_PRIVATE_KEY
+                ? [process.env.SHARDEUM_PRIVATE_KEY]
+                : process.env.PRIVATE_KEY
+                    ? [process.env.PRIVATE_KEY]
+                    : [],
+            // Let the network suggest gas price; override here if needed
         }
     },
 

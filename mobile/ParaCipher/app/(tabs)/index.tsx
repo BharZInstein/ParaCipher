@@ -4,16 +4,47 @@ import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { InsurancePolicyService } from '@/services/BlockchainService';
+import { useWallet } from '@/context/WalletContext';
+import { ethers } from 'ethers';
 
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isConnected, provider } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleStartShift = () => {
-    router.push('/shift/active');
+  const handleStartShift = async () => {
+    if (!isConnected || !provider) {
+      Alert.alert("Not Connected", "Please connect your wallet from the Wallet tab first!");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Wrap WalletConnect provider in ethers BrowserProvider
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      const result = await InsurancePolicyService.buyCoverage(signer);
+
+      if (result.success) {
+        Alert.alert(
+          "Coverage Activated! ✅",
+          `You're covered for 24 hours!\n\nTransaction: ${result.txHash?.slice(0, 10)}...`,
+          [{ text: "OK", onPress: () => router.push('/shift/active') }]
+        );
+      } else {
+        Alert.alert("Failed", result.error || "Could not buy coverage. Make sure you have 5 SHM + gas fees.");
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to connect to blockchain");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,7 +142,7 @@ export default function HomeScreen() {
                   <Text style={styles.startBtnTitle}>START SHIFT</Text>
                   <Text style={styles.startBtnSubtitle}>AUTO-DEBIT ACTIVE</Text>
                 </View>
-                <Text style={styles.startBtnPrice}>₹25</Text>
+                <Text style={styles.startBtnPrice}>5 SHM</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -392,6 +423,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 15,
     elevation: 8,
+  },
+  startBtnDisabled: {
+    opacity: 0.5,
   },
   boltIconContainer: {
     width: 52,

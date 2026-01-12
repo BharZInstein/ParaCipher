@@ -78,3 +78,4 @@ The `WalletProvider` was returning `null` before the MetaMask SDK was fully init
 
 **If you still see errors, check the console logs for specific error messages.**
 
+

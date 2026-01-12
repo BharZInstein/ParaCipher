@@ -37,8 +37,8 @@ contract ClaimPayout {
     // Reference to ReputationScore contract
     IReputationScore public reputationScore;
     
-    // Payout amount: 50 MATIC (changed from 50,000 for realistic testing)
-    uint256 public constant PAYOUT_AMOUNT = 50 ether;
+    // Payout amount: 10 SHM (minimal for testing)
+    uint256 public constant PAYOUT_AMOUNT = 10 ether;
     
     // Total claims paid out
     uint256 public totalClaimsPaid;
@@ -64,7 +64,7 @@ contract ClaimPayout {
      */
     struct Claim {
         address worker;             // Worker who filed claim
-        uint256 requestedAmount;    // Amount requested (always 50 MATIC)
+        uint256 requestedAmount;    // Amount requested (always 10 SHM)
         uint256 filedAt;            // Timestamp when claim was filed
         uint256 processedAt;        // Timestamp when claim was approved/rejected
         ClaimStatus status;         // Current status of claim

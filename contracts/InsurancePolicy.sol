@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 /**
  * @title InsurancePolicy
  * @dev Manages daily coverage purchases for gig workers
- * Workers pay 25 MATIC for 24-hour coverage of 50,000 MATIC
+ * Workers pay 2 SHM for 24-hour coverage of 10 SHM
  */
 contract InsurancePolicy {
     
@@ -12,11 +12,11 @@ contract InsurancePolicy {
     
     address public owner;
     
-    // Premium amount: 25 MATIC (represents ₹25)
-    uint256 public constant PREMIUM_AMOUNT = 25 ether;
+    // Premium amount: 2 SHM (minimal for testing)
+    uint256 public constant PREMIUM_AMOUNT = 2 ether;
     
-    // Coverage amount: 50,000 MATIC (represents ₹50,000)
-    uint256 public constant COVERAGE_AMOUNT = 50 ether;
+    // Coverage amount: 10 SHM (minimal for testing)
+    uint256 public constant COVERAGE_AMOUNT = 10 ether;
     
     // Coverage duration: 24 hours
     uint256 public constant COVERAGE_DURATION = 24 hours;
@@ -32,7 +32,7 @@ contract InsurancePolicy {
      */
     struct Policy {
         address workerAddress;      // Address of the worker
-        uint256 coverageAmount;     // Amount of coverage (50,000 MATIC)
+        uint256 coverageAmount;     // Amount of coverage (10 SHM)
         uint256 startTime;          // When coverage started
         uint256 endTime;            // When coverage expires (startTime + 24hrs)
         bool isActive;              // Is the policy currently active
@@ -90,14 +90,14 @@ contract InsurancePolicy {
     // ========== MAIN FUNCTIONS ==========
     
     /**
-     * @dev Worker buys daily coverage by paying 25 MATIC
-     * Creates a 24-hour active policy with 50,000 MATIC coverage
+     * @dev Worker buys daily coverage by paying 2 SHM
+     * Creates a 24-hour active policy with 10 SHM coverage
      */
     function buyDailyCoverage() external payable {
         // Check correct premium amount was sent
         require(
             msg.value == PREMIUM_AMOUNT,
-            "Must send exactly 25 MATIC for coverage"
+            "Must send exactly 2 SHM for coverage"
         );
         
         // Check if worker already has an active policy

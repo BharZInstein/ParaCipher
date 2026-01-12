@@ -1,22 +1,9 @@
 import { ethers } from 'ethers';
 import { WalletConnectModal, useWalletConnectModal } from '@walletconnect/modal-react-native';
-import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
-
-const projectId = process.env.EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'b56e18d47c72ab683b10814fe9495694'; // Free Demo ID for testing
-
-const providerMetadata = {
-    name: 'ParaCipher',
-    description: 'Decentralized Parametric Insurance',
-    url: 'https://paracipher.app',
-    icons: ['https://your-project-logo.com/logo.png'],
-    redirect: {
-        native: Linking.createURL(''),
-        universal: 'paracipher.app'
-    }
-};
+import { Alert } from 'react-native';
+import { NetworkService } from '../services/BlockchainService';
 
 interface WalletContextType {
     isConnected: boolean;
@@ -24,6 +11,7 @@ interface WalletContextType {
     balance: string;
     connectWallet: () => Promise<void>;
     disconnectWallet: () => Promise<void>;
+    provider: any; // Expose provider for blockchain transactions
 }
 
 const WalletContext = createContext<WalletContextType>({
@@ -32,65 +20,124 @@ const WalletContext = createContext<WalletContextType>({
     balance: '0.00',
     connectWallet: async () => { },
     disconnectWallet: async () => { },
+    provider: null,
 });
+
+// WalletConnect Project ID - you need to get this from https://cloud.walletconnect.com/
+const projectId = 'YOUR_PROJECT_ID_HERE'; // Replace with actual project ID
+
+const providerMetadata = {
+    name: 'ParaCipher',
+    description: 'Decentralized Micro-Insurance for Gig Workers',
+    url: 'https://paracipher.app',
+    icons: ['https://paracipher.app/logo.png'],
+    redirect: {
+        native: 'paracipher://',
+    }
+};
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const { open, isConnected: isWCConnected, address: wcAddress, provider: wcProvider } = useWalletConnectModal();
-    const [balance, setBalance] = useState('0.00'); // Default to 0.00 instead of mock value
+    const [balance, setBalance] = useState('0.00');
+    const [formattedAddress, setFormattedAddress] = useState<string | null>(null);
 
-    // Sync WalletConnect state with local state if needed, or just use WC state directly
-    // logic: if WC is connected, we are connected.
-
+    // Format address when it changes
     useEffect(() => {
-        const fetchBalance = async () => {
-            if (isWCConnected && wcAddress && wcProvider) {
-                try {
-                    // Save address to secure storage
-                    await SecureStore.setItemAsync('wallet_address', wcAddress);
+        if (wcAddress) {
+            const formatted = `${wcAddress.slice(0, 6)}...${wcAddress.slice(-4)}`;
+            setFormattedAddress(formatted);
+            loadBalance(wcAddress);
 
-                    // Create Ethers Provider from WalletConnect Provider
-                    const ethersProvider = new ethers.providers.Web3Provider(wcProvider);
-
-                    // Fetch Balance
-                    console.log("Fetching balance for:", wcAddress);
-                    const rawBalance = await ethersProvider.getBalance(wcAddress);
-                    console.log("Raw Balance:", rawBalance.toString());
-                    const formattedBalance = ethers.utils.formatEther(rawBalance);
-
-                    // Format to display (e.g. 0.0050)
-                    const displayBalance = parseFloat(formattedBalance).toFixed(4);
-                    console.log("Display Balance:", displayBalance);
-                    setBalance(displayBalance);
-                } catch (error) {
-                    console.error("Failed to fetch balance:", error);
-                    setBalance('0.00'); // Fallback to 0
-                }
+            // Try to switch to Shardeum network
+            if (wcProvider) {
+                switchToShardeumNetwork();
             }
-        };
+        } else {
+            setFormattedAddress(null);
+            setBalance('0.00');
+        }
+    }, [wcAddress, wcProvider]);
 
-        fetchBalance();
-    }, [isWCConnected, wcAddress, wcProvider]);
+    const switchToShardeumNetwork = async () => {
+        if (!wcProvider) return;
+
+        try {
+            console.log('[WalletContext] Switching to Shardeum network...');
+            const result = await NetworkService.switchToShardeum(wcProvider);
+            if (result.success) {
+                console.log('[WalletContext] Successfully switched to Shardeum');
+            } else {
+                console.warn('[WalletContext] Could not switch network:', result.error);
+                Alert.alert(
+                    "Network Switch",
+                    "Please manually switch to Shardeum network in your wallet app.",
+                    [{ text: "OK" }]
+                );
+            }
+        } catch (error) {
+            console.warn('[WalletContext] Network switch error:', error);
+        }
+    };
+
+    const loadBalance = async (addr: string) => {
+        try {
+            if (!wcProvider) {
+                console.log('[WalletContext] No provider available for balance check');
+                setBalance('0.00');
+                return;
+            }
+
+            console.log('[WalletContext] Fetching balance for:', addr);
+
+            // Create ethers provider from WalletConnect provider
+            const ethersProvider = new ethers.BrowserProvider(wcProvider);
+            const balance = await ethersProvider.getBalance(addr);
+            const formattedBalance = ethers.formatEther(balance);
+            const numericBalance = parseFloat(formattedBalance);
+            const displayBalance = numericBalance.toFixed(2);
+            setBalance(displayBalance);
+            console.log('[WalletContext] Balance loaded:', displayBalance, 'SHM');
+        } catch (error) {
+            console.error('[WalletContext] Error loading balance:', error);
+            setBalance('0.00');
+        }
+    };
 
     const connectWallet = async () => {
-        if (isWCConnected) return;
-        await open();
+        try {
+            console.log('[WalletContext] Opening WalletConnect modal...');
+            await open();
+        } catch (error: any) {
+            console.error('[WalletContext] Connection error:', error);
+            Alert.alert(
+                "Connection Failed",
+                error?.message || "Failed to connect wallet. Please try again."
+            );
+        }
     };
 
     const disconnectWallet = async () => {
-        if (wcProvider) {
-            await wcProvider.disconnect();
+        try {
+            console.log('[WalletContext] Disconnecting wallet...');
+            // WalletConnect disconnect is handled by the modal
+            // Just reset local state
+            setFormattedAddress(null);
+            setBalance('0.00');
+            await SecureStore.deleteItemAsync('wallet_address').catch(() => { });
+            console.log('[WalletContext] Wallet disconnected');
+        } catch (error) {
+            console.error('[WalletContext] Disconnect error:', error);
         }
-        await SecureStore.deleteItemAsync('wallet_address');
-        setBalance('0.00');
     };
 
     return (
         <WalletContext.Provider value={{
             isConnected: isWCConnected,
-            address: wcAddress || null,
+            address: formattedAddress,
             balance,
             connectWallet,
-            disconnectWallet
+            disconnectWallet,
+            provider: wcProvider, // Expose provider for transactions
         }}>
             {children}
             <WalletConnectModal

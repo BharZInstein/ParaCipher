@@ -1,0 +1,92 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    🚀 PARACIPHER - QUICK REFERENCE                   ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📍 CONTRACT ADDRESSES (Shardeum Testnet)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+InsurancePolicy:  0x3A84E06554876A557b16249619247eF765C35407
+ClaimPayout:      0xf678B23d7887d9c9dbc49C2170902d5c88075c2D
+ReputationScore:  0x199678E7AF0B7a9f62523563f9eF861e242e944A
+
+💰 AMOUNTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+User Pays:        5 SHM (daily coverage)
+User Gets:        150 SHM (if claim approved)
+Duration:         24 hours
+Contract Balance: 200 SHM (1 claim ready!)
+
+🌐 NETWORK INFO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Chain ID:         8119 (0x1FB7 in hex)
+RPC URL:          https://api-mezame.shardeum.org
+Explorer:         https://explorer-mezame.shardeum.org
+Symbol:           SHM
+
+📱 MOBILE APP - MINIMAL CODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Buy Coverage (user pays 5 SHM)
+const contract = new ethers.Contract(
+  "0x3A84E06554876A557b16249619247eF765C35407",
+  ["function buyDailyCoverage() external payable"],
+  signer
+);
+await contract.buyDailyCoverage({ value: ethers.parseEther("5") });
+
+// File Claim
+const claimContract = new ethers.Contract(
+  "0xf678B23d7887d9c9dbc49C2170902d5c88075c2D",
+  ["function fileClaim(string memory notes) external"],
+  signer
+);
+await claimContract.fileClaim("Accident description here");
+
+// Check Coverage Status
+const [isActive, amount, timeLeft] = 
+  await contract.checkMyCoverage();
+
+🎬 DEMO FLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Connect MetaMask (Shardeum network)
+2. Buy Coverage → Pay 5 SHM
+3. Show "Coverage Active" for 24 hours
+4. File Claim → Enter accident details
+5. Approve Claim (as owner)
+6. Show 150 SHM payout received!
+7. Open Explorer to show blockchain proof
+
+⚡ QUICK COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Check balance:     npx hardhat run scripts/check-balance.js --network shardeum
+Demo test:         npx hardhat run scripts/hackathon-demo.js --network shardeum
+Get SHM back:      npx hardhat run scripts/emergency-withdraw.js --network shardeum
+
+📄 DOCS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Full Guide:        HACKATHON_GUIDE.md
+Quick Start:       READY_FOR_HACKATHON.md
+This File:         QUICK_START.txt
+
+💬 ELEVATOR PITCH (30 SEC)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"ParaCipher provides instant micro-insurance for gig workers. Pay 5 SHM
+for 24-hour coverage. If an accident happens, file a claim and get 150
+SHM payout instantly on the blockchain. No paperwork, no waiting weeks.
+Built on Shardeum for low fees. Decentralized, transparent, instant."
+
+✅ CHECKLIST BEFORE DEMO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+□ MetaMask installed & Shardeum network added
+□ Test wallet has at least 10 SHM
+□ Mobile app connects to correct contract addresses
+□ Practice demo 2-3 times
+□ Explorer tabs open & ready
+□ Backup plan ready (screenshots/video)
+
+🎯 YOU'RE READY!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: ✅ DEPLOYED & FUNDED
+Ready:  ✅ FOR HACKATHON
+Demo:   ✅ TESTED
+
+GOOD LUCK! 🚀
