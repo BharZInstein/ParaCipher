@@ -29,6 +29,8 @@ export const BLOCKCHAIN_CONFIG = {
 export const INSURANCE_POLICY_ABI = [
     "function buyDailyCoverage() external payable",
     "function checkMyCoverage() external view returns (bool isActive, uint256 coverageAmount, uint256 timeRemaining)",
+    "function getPolicyDetails(address worker) external view returns (tuple(address workerAddress, uint256 coverageAmount, uint256 startTime, uint256 endTime, bool isActive, bool hasClaimed))",
+    "function hasValidCoverage(address worker) external view returns (bool)",
     "function PREMIUM_AMOUNT() external view returns (uint256)",
     "function COVERAGE_AMOUNT() external view returns (uint256)",
     "function COVERAGE_DURATION() external view returns (uint256)"

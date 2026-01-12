@@ -8,6 +8,7 @@ import { NetworkService } from '../services/BlockchainService';
 interface WalletContextType {
     isConnected: boolean;
     address: string | null;
+    rawAddress: string | null; // Full address for blockchain transactions
     balance: string;
     chainId: number | null;
     connectWallet: () => Promise<void>;
@@ -19,6 +20,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType>({
     isConnected: false,
     address: null,
+    rawAddress: null,
     balance: '0.00',
     chainId: null,
     connectWallet: async () => { },
@@ -275,6 +277,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         <WalletContext.Provider value={{
             isConnected: isWCConnected,
             address: formattedAddress,
+            rawAddress: wcAddress || null, // Full address for blockchain calls
             balance,
             chainId,
             connectWallet,
@@ -298,10 +301,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
                                 'wallet_switchEthereumChain',
                                 'wallet_addEthereumChain'
                             ],
-                            chains: ['eip155:1'],
+                            chains: ['eip155:8119'], // Shardeum Mezame Testnet
                             events: ['chainChanged', 'accountsChanged'],
                             rpcMap: {
-                                1: 'https://ethereum.publicnode.com',
                                 8119: 'https://api-mezame.shardeum.org'
                             }
                         }

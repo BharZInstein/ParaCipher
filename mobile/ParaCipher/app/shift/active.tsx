@@ -2,8 +2,12 @@ import TechBackground from '@/components/TechBackground';
 import UnifiedHeader from '@/components/UnifiedHeader';
 import { BLOCKCHAIN_CONFIG } from '@/constants/Blockchain';
 import { Typography } from '@/constants/theme';
+import { useWallet } from '@/context/WalletContext';
+import { InsurancePolicyService } from '@/services/BlockchainService';
 import { HapticFeedback } from '@/utils/Haptics';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { ethers } from 'ethers';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
@@ -21,28 +25,160 @@ const ScreenColors = {
     disabled: "#444444",
 };
 
-// 6 hours in seconds for demo
+// 6 hours in seconds for fallback
 const COVERAGE_DURATION_SECONDS = BLOCKCHAIN_CONFIG.COVERAGE_DURATION * 60 * 60;
 
 export default function ActiveShiftScreen() {
     const router = useRouter();
-    // For demo: start with full 6 hours
+    const { isConnected, provider, rawAddress } = useWallet();
+
+    // State for coverage status
     const [timeRemaining, setTimeRemaining] = useState(COVERAGE_DURATION_SECONDS);
     const [isActive, setIsActive] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
+    const [txHash, setTxHash] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Simulate purchase on mount (demo - deduct 5 SHM conceptually)
+    // Buy coverage and start timer on mount
     useEffect(() => {
-        setIsPurchasing(true);
-        // Simulate a 2-second "transaction"
-        const timer = setTimeout(() => {
-            setIsPurchasing(false);
-            setPurchaseComplete(true);
-            console.log('[ActiveShift] Coverage purchased! 5 SHM deducted (demo)');
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, []);
+        const initializeCoverage = async () => {
+            console.log('[ActiveShift] Initializing coverage...');
+
+            if (!provider || !rawAddress) {
+                // No wallet connected - use demo mode
+                console.log('[ActiveShift] No wallet - using demo mode');
+                setIsLoading(false);
+                setPurchaseComplete(true);
+                return;
+            }
+
+            try {
+                const ethersProvider = new ethers.providers.Web3Provider(provider);
+                const signer = ethersProvider.getSigner();
+
+                // First check if user already has active coverage
+                console.log('[ActiveShift] Checking existing coverage...');
+                const status = await InsurancePolicyService.checkCoverageStatus(signer, rawAddress);
+
+                if (status.isActive && status.timeRemaining > 0) {
+                    // Already has coverage - just show timer
+                    console.log(`[ActiveShift] Already covered! ${status.hoursLeft}h ${status.minutesLeft}m remaining`);
+                    setTimeRemaining(status.timeRemaining);
+                    setIsActive(true);
+                    setIsLoading(false);
+                    setPurchaseComplete(true);
+                    return;
+                }
+
+                // No active coverage - need to buy
+                console.log('[ActiveShift] No coverage found, purchasing...');
+                setIsPurchasing(true);
+                setIsLoading(false); // Show UI while purchasing
+
+                // Switch to Shardeum network first
+                console.log('[ActiveShift] Checking network...');
+                try {
+                    const network = await ethersProvider.getNetwork();
+                    console.log('[ActiveShift] Current chain:', network.chainId);
+
+                    if (network.chainId !== 8119) {
+                        console.log('[ActiveShift] Wrong network! Switching to Shardeum (8119)...');
+                        try {
+                            await provider.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0x1FB7' }], // 8119 in hex
+                            });
+                        } catch (switchError: any) {
+                            // Chain not added, try to add it
+                            if (switchError.code === 4902 || switchError.message?.includes('Unrecognized')) {
+                                await provider.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: '0x1FB7',
+                                        chainName: 'Shardeum Mezame',
+                                        nativeCurrency: { name: 'Shardeum', symbol: 'SHM', decimals: 18 },
+                                        rpcUrls: ['https://api-mezame.shardeum.org'],
+                                        blockExplorerUrls: ['https://explorer-mezame.shardeum.org']
+                                    }]
+                                });
+                            }
+                        }
+                    }
+                } catch (networkError) {
+                    console.error('[ActiveShift] Network check failed:', networkError);
+                }
+
+                // Automatically open MetaMask to approve transaction
+                console.log('[ActiveShift] Opening MetaMask for transaction approval...');
+                try {
+                    await Linking.openURL('metamask://');
+                } catch (e) {
+                    console.log('[ActiveShift] Could not auto-open wallet');
+                }
+
+                // Try to buy coverage with a timeout
+                console.log('[ActiveShift] Attempting purchase...');
+
+                // Create a timeout promise
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Transaction timed out - please try reconnecting your wallet')), 30000)
+                );
+
+                try {
+                    const result = await Promise.race([
+                        InsurancePolicyService.buyCoverage(signer),
+                        timeoutPromise
+                    ]) as { success: boolean; txHash?: string; error?: string };
+
+                    if (result.success) {
+                        console.log('[ActiveShift] Coverage purchased!', result.txHash);
+                        setTxHash(result.txHash || null);
+                        setPurchaseComplete(true);
+                        HapticFeedback.success();
+                        Alert.alert(
+                            "Coverage Activated! ✅",
+                            "You're now covered for 6 hours!\n\nTx: " + (result.txHash?.slice(0, 10) + "...")
+                        );
+                    } else {
+                        throw new Error(result.error || "Transaction failed");
+                    }
+                } catch (txError: any) {
+                    console.error('[ActiveShift] Transaction error:', txError.message);
+
+                    // Offer demo mode as fallback
+                    Alert.alert(
+                        "Transaction Issue",
+                        "Could not complete the blockchain transaction. This may be a WalletConnect session issue.\n\nWould you like to continue in demo mode (timer will start without real transaction)?",
+                        [
+                            {
+                                text: "Try Again",
+                                onPress: () => router.back()
+                            },
+                            {
+                                text: "Demo Mode",
+                                onPress: () => {
+                                    console.log('[ActiveShift] Starting demo mode');
+                                    setPurchaseComplete(true);
+                                    setIsPurchasing(false);
+                                }
+                            }
+                        ]
+                    );
+                    return; // Don't continue to finally block yet
+                }
+            } catch (error: any) {
+                console.error('[ActiveShift] Error:', error);
+                setErrorMessage(error.message || "An error occurred");
+            } finally {
+                setIsPurchasing(false);
+                setPurchaseComplete(true);
+            }
+        };
+
+        initializeCoverage();
+    }, [provider, rawAddress]);
 
     // Countdown timer - only starts after purchase
     useEffect(() => {
@@ -152,7 +288,7 @@ export default function ActiveShiftScreen() {
                     {/* Status Pill */}
                     <View style={[styles.statusPill, !isActive && styles.statusPillExpired]}>
                         <View style={styles.pingContainer}>
-                            {isPurchasing ? (
+                            {isLoading ? (
                                 <ActivityIndicator size="small" color={ScreenColors.primary} />
                             ) : (
                                 <>
@@ -162,9 +298,9 @@ export default function ActiveShiftScreen() {
                             )}
                         </View>
                         <Text style={[styles.statusText, !isActive && styles.statusTextExpired]}>
-                            {isPurchasing ? 'PURCHASING...' : isActive ? 'COVERAGE ACTIVE' : 'COVERAGE EXPIRED'}
+                            {isLoading ? 'LOADING...' : isPurchasing ? 'PURCHASING 5 SHM...' : isActive ? 'COVERAGE ACTIVE' : 'COVERAGE EXPIRED'}
                         </Text>
-                        {!isPurchasing && isActive && (
+                        {!isLoading && !isPurchasing && isActive && (
                             <>
                                 <View style={styles.pillDivider} />
                                 <View style={styles.secureBadge}>
@@ -244,7 +380,7 @@ export default function ActiveShiftScreen() {
                                 router.push('/claim');
                             }}
                             activeOpacity={isActive ? 0.8 : 1}
-                            disabled={isPurchasing}
+                            disabled={isLoading}
                         >
                             <MaterialIcons name="report-problem" size={20} color={isActive ? "white" : "#888"} />
                             <Text style={[styles.fileClaimText, !isActive && styles.fileClaimTextDisabled]}>

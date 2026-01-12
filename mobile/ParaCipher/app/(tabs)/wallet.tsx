@@ -23,7 +23,7 @@ const WalletTheme = {
 import { useWallet } from '@/context/WalletContext';
 
 export default function WalletScreen() {
-    const { isConnected, connectWallet, balance, address, switchNetwork, chainId } = useWallet();
+    const { isConnected, connectWallet, disconnectWallet, balance, address, switchNetwork, chainId } = useWallet();
 
     const [isSwitching, setIsSwitching] = useState(false);
 
@@ -164,6 +164,19 @@ export default function WalletScreen() {
                                     <Text style={styles.actionBtnText}>Swap</Text>
                                 </TouchableOpacity>
                             </View>
+
+                            {/* Disconnect Button */}
+                            <TouchableOpacity
+                                style={[styles.actionBtn, { marginTop: 16, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' }]}
+                                onPress={async () => {
+                                    HapticFeedback.light();
+                                    console.log('[WalletScreen] Disconnecting wallet...');
+                                    await disconnectWallet();
+                                }}
+                            >
+                                <MaterialIcons name="logout" size={20} color="#EF4444" />
+                                <Text style={[styles.actionBtnText, { color: '#EF4444' }]}>Disconnect Wallet</Text>
+                            </TouchableOpacity>
                         </View>
 
                         {/* Activity Log */}

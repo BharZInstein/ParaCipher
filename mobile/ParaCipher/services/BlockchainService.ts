@@ -14,26 +14,35 @@ import {
 export class InsurancePolicyService {
 
     /**
-     * Buy daily coverage (5 SHM for 24 hours)
+     * Buy daily coverage (5 SHM for 6 hours)
      */
     static async buyCoverage(signer: ethers.Signer) {
         try {
+            console.log("[InsurancePolicy] Creating contract instance...");
+            console.log("[InsurancePolicy] Contract address:", BLOCKCHAIN_CONFIG.INSURANCE_POLICY_ADDRESS);
+            console.log("[InsurancePolicy] Premium amount:", BLOCKCHAIN_CONFIG.PREMIUM_AMOUNT, "SHM");
+
             const contract = new ethers.Contract(
                 BLOCKCHAIN_CONFIG.INSURANCE_POLICY_ADDRESS,
                 INSURANCE_POLICY_ABI,
                 signer
             );
 
+            console.log("[InsurancePolicy] Sending transaction - CHECK YOUR WALLET APP TO APPROVE!");
             const tx = await contract.buyDailyCoverage({
                 value: ethers.utils.parseEther(BLOCKCHAIN_CONFIG.PREMIUM_AMOUNT)
             });
 
-            console.log("[InsurancePolicy] Buy coverage tx:", tx.hash);
+            console.log("[InsurancePolicy] Transaction sent! Hash:", tx.hash);
+            console.log("[InsurancePolicy] Waiting for confirmation...");
             await tx.wait();
+            console.log("[InsurancePolicy] Transaction confirmed!");
 
             return { success: true, txHash: tx.hash };
         } catch (error: any) {
             console.error("[InsurancePolicy] Buy coverage failed:", error);
+            console.error("[InsurancePolicy] Error code:", error?.code);
+            console.error("[InsurancePolicy] Error reason:", error?.reason);
             return {
                 success: false,
                 error: error?.reason || error?.message || "Failed to buy coverage"
@@ -43,30 +52,61 @@ export class InsurancePolicyService {
 
     /**
      * Check current coverage status
+     * Uses direct RPC with getPolicyDetails for faster, reliable reads
      */
-    static async checkCoverageStatus(provider: ethers.providers.Provider | ethers.Signer, address: string) {
+    static async checkCoverageStatus(signerOrProvider: ethers.providers.Provider | ethers.Signer, address: string) {
         try {
+            console.log("[InsurancePolicy] Checking coverage for:", address);
+
+            // Use direct RPC provider for faster read calls
+            const directProvider = new ethers.providers.JsonRpcProvider(BLOCKCHAIN_CONFIG.RPC_URL);
+
             const contract = new ethers.Contract(
                 BLOCKCHAIN_CONFIG.INSURANCE_POLICY_ADDRESS,
                 INSURANCE_POLICY_ABI,
-                provider
+                directProvider
             );
 
-            const [isActive, coverageAmount, timeRemaining] = await contract.checkMyCoverage();
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout checking coverage')), 8000)
+            );
 
-            const hoursLeft = Math.floor(Number(timeRemaining) / 3600);
-            const minutesLeft = Math.floor((Number(timeRemaining) % 3600) / 60);
+            // Use getPolicyDetails which takes an address parameter
+            const resultPromise = contract.getPolicyDetails(address);
+
+            const policy = await Promise.race([
+                resultPromise,
+                timeoutPromise
+            ]) as any;
+
+            console.log("[InsurancePolicy] Policy details:", {
+                isActive: policy.isActive,
+                endTime: policy.endTime?.toString(),
+                hasClaimed: policy.hasClaimed
+            });
+
+            // Calculate time remaining
+            const now = Math.floor(Date.now() / 1000);
+            const endTime = Number(policy.endTime || 0);
+            const timeRemaining = Math.max(0, endTime - now);
+            const isActive = policy.isActive && timeRemaining > 0 && !policy.hasClaimed;
+
+            const hoursLeft = Math.floor(timeRemaining / 3600);
+            const minutesLeft = Math.floor((timeRemaining % 3600) / 60);
+
+            console.log("[InsurancePolicy] Calculated:", { isActive, timeRemaining, hoursLeft, minutesLeft });
 
             return {
                 isActive,
-                coverageAmount: ethers.utils.formatEther(coverageAmount),
-                timeRemaining: Number(timeRemaining),
+                coverageAmount: ethers.utils.formatEther(policy.coverageAmount || 0),
+                timeRemaining,
                 hoursLeft,
                 minutesLeft,
-                expiresAt: isActive ? new Date(Date.now() + Number(timeRemaining) * 1000) : null
+                expiresAt: isActive ? new Date(endTime * 1000) : null
             };
         } catch (error: any) {
-            console.error("[InsurancePolicy] Check status failed:", error);
+            console.error("[InsurancePolicy] Check status failed:", error.message);
             return {
                 isActive: false,
                 coverageAmount: "0",
