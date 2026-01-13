@@ -1,28 +1,60 @@
 # ParaCipher - Parametric Insurance for Gig Workers
 
-A simple blockchain-based parametric insurance platform for Uber/Zomato drivers. Workers pay ₹25 for 24-hour coverage and receive ₹50,000 instant payout if they have an accident.
+A blockchain-based parametric insurance platform for gig economy workers. Workers purchase daily coverage and receive instant payouts when accidents occur.
+
+---
+
+## 🌐 Deployment on Shardeum Testnet
+
+**All smart contracts are deployed and live on Shardeum EVM Testnet (Mezame).**
+
+### Network Configuration
+- **Network:** Shardeum EVM Testnet (Mezame)
+- **Chain ID:** 8119
+- **RPC URL:** https://api-mezame.shardeum.org
+- **Explorer:** https://explorer-mezame.shardeum.org
+- **Native Token:** SHM
+
+### Contract Addresses
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| **InsurancePolicy** | `0x3A84E06554876A557b16249619247eF765C35407` | [View](https://explorer-mezame.shardeum.org/address/0x3A84E06554876A557b16249619247eF765C35407) |
+| **ClaimPayout** | `0xf678B23d7887d9c9dbc49C2170902d5c88075c2D` | [View](https://explorer-mezame.shardeum.org/address/0xf678B23d7887d9c9dbc49C2170902d5c88075c2D) |
+| **ReputationScore** | `0x199678E7AF0B7a9f62523563f9eF861e242e944A` | [View](https://explorer-mezame.shardeum.org/address/0x199678E7AF0B7a9f62523563f9eF861e242e944A) |
+
+**Note:** ClaimPayout contract currently holds 100 SHM (requires 150 SHM per payout).
 
 ---
 
 ## 📋 Smart Contracts Overview
 
 ### 1. **InsurancePolicy.sol**
-- Manages daily coverage purchases
-- Stores active policies
-- Handles premium collection
-- 24-hour auto-expiring coverage
+Manages the insurance policy lifecycle. Workers purchase 24-hour coverage by sending 5 SHM premium. The contract automatically tracks policy expiration, prevents duplicate purchases during active coverage, and allows the owner to withdraw collected premiums. Each policy includes coverage amount, expiration timestamp, and claim status.
+
+**Key Functions:**
+- `buyDailyCoverage()` - Purchase 24-hour coverage (5 SHM)
+- `checkMyCoverage()` - View active coverage status
+- `withdrawPremiums()` - Owner collects premiums
 
 ### 2. **ClaimPayout.sol**
-- Processes accident claims
-- Manual claim approval (MVP)
-- Sends instant payouts
-- Prevents double claims
+Handles claim filing, approval, and payout distribution. Validates active coverage before accepting claims, prevents double claims per policy, and automatically updates reputation scores. Features reentrancy protection and manual approval workflow (MVP).
+
+**Key Functions:**
+- `fileClaim(string description)` - Submit accident claim
+- `approveClaim(address worker)` - Owner approves and processes payout (50,000 SHM)
+- `rejectClaim(address worker, string reason)` - Owner rejects fraudulent claims
+- `getMyClaimStatus()` - Check claim status
+- `fundContract()` - Add funds for payouts
 
 ### 3. **ReputationScore.sol**
-- Tracks worker safety records
-- Calculates premium discounts
-- Rewards safe drivers
-- Penalizes frequent claims
+Tracks worker safety records and calculates premium discounts. Each worker starts with 100 base points. Safe driving days add +5 points, while claims deduct -20 points. Calculates dynamic discounts (up to 20% off) for high-reputation workers and applies surcharges for risky drivers.
+
+**Scoring System:**
+- Base score: 100 points
+- Safe day: +5 points
+- Claim penalty: -20 points
+- Discount tiers: 120+ (10%), 150+ (20%), <80 (10% surcharge)
 
 ---
 
@@ -56,7 +88,7 @@ claimPayout.setReputationContract(address(reputationScore));
 
 ### Step 5: Fund ClaimPayout Contract
 ```solidity
-// Send MATIC to ClaimPayout for payouts
+// Send SHM to ClaimPayout for payouts
 claimPayout.fundContract{value: 500000 ether}();
 // Or simply send directly to contract address
 ```
@@ -98,14 +130,14 @@ claimPayout.fundContract{value: 500000 ether}();
 
 #### 1. Buy Coverage
 ```solidity
-// Send 25 MATIC to buy 24-hour coverage
-insurancePolicy.buyDailyCoverage{value: 25 ether}();
+// Send 5 SHM to buy 24-hour coverage
+insurancePolicy.buyDailyCoverage{value: 5 ether}();
 ```
 
 #### 2. Check Your Coverage
 ```solidity
 (bool isActive, uint256 coverage, uint256 timeLeft) = insurancePolicy.checkMyCoverage();
-// Returns: (true, 50000 MATIC, seconds remaining)
+// Returns: (true, 50000 SHM, seconds remaining)
 ```
 
 #### 3. File a Claim (if accident happens)
@@ -136,7 +168,7 @@ claimPayout.fileClaim("Two-wheeler accident on MG Road, Bangalore at 3 PM");
 claimPayout.approveClaim(workerAddress);
 // This automatically:
 // - Marks policy as claimed
-// - Sends 50,000 MATIC to worker
+// - Sends 50,000 SHM to worker
 // - Deducts 20 reputation points
 ```
 
@@ -171,9 +203,9 @@ claimPayout.fundContract{value: 1000000 ether}();
 // ===== DAY 1: New Driver Joins =====
 
 // 1. Rajesh buys coverage (8 AM)
-await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("25")});
+await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("5")});
 ✅ Event: PolicyPurchased
-✅ Coverage: 50,000 MATIC until 8 AM tomorrow
+✅ Coverage: 50,000 SHM until 8 AM tomorrow
 ✅ Reputation: 100 (default)
 
 // 2. Rajesh completes safe day (8 PM)
@@ -185,7 +217,7 @@ await reputationScore.connect(owner).addSafeDay(rajesh.address);
 // ===== DAY 2: Accident Happens =====
 
 // 3. Rajesh renews coverage (8 AM)
-await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("25")});
+await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("5")});
 ✅ New 24-hour coverage starts
 
 // 4. Accident occurs! (2 PM)
@@ -197,7 +229,7 @@ await claimPayout.connect(rajesh).fileClaim("Bike accident, broken arm");
 await claimPayout.connect(owner).approveClaim(rajesh.address);
 ✅ Event: ClaimApproved
 ✅ Event: PayoutSent
-✅ Rajesh receives: 50,000 MATIC
+✅ Rajesh receives: 50,000 SHM
 ✅ Reputation: 85 (-20 penalty)
 ✅ Policy marked as claimed
 
@@ -217,7 +249,7 @@ const discount = await reputationScore.calculateDiscount(rajesh.address);
 console.log(discount); // Returns: 10
 
 // 8. Buy coverage with new reputation
-await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("25")});
+await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther("5")});
 // NOTE: In V2, we'll integrate discount into buyDailyCoverage()
 // For now, discount is just tracked for future use
 
@@ -228,9 +260,9 @@ await insurancePolicy.connect(rajesh).buyDailyCoverage({value: ethers.parseEther
 // Reputation: 150+ (qualifies for 20% discount)
 const premium = await reputationScore.getDiscountedPremium(
     rajesh.address, 
-    ethers.parseEther("25")
+    ethers.parseEther("5")
 );
-console.log(premium); // Returns: 20 MATIC (20% off)
+console.log(premium); // Returns: 4 SHM (20% off)
 ```
 
 ---
@@ -275,18 +307,20 @@ console.log(premium); // Returns: 20 MATIC (20% off)
 
 ---
 
-## 📊 Contract Addresses (After Deployment)
+## 📊 Contract Addresses (Shardeum Testnet)
+
+**All contracts are deployed and live on Shardeum EVM Testnet:**
 
 ```
-InsurancePolicy:  0x... (deploy first)
-ClaimPayout:      0x... (deploy second, pass InsurancePolicy address)
-ReputationScore:  0x... (deploy third)
+InsurancePolicy:  0x3A84E06554876A557b16249619247eF765C35407
+ClaimPayout:      0xf678B23d7887d9c9dbc49C2170902d5c88075c2D
+ReputationScore:  0x199678E7AF0B7a9f62523563f9eF861e242e944A
 ```
 
-Then run:
-```solidity
-claimPayout.setReputationContract(reputationScoreAddress);
-```
+**Network:** Shardeum EVM Testnet (Mezame) | Chain ID: 8119  
+**Explorer:** https://explorer-mezame.shardeum.org
+
+**Note:** Contracts are already connected. ReputationScore is linked to ClaimPayout.
 
 ---
 
@@ -332,7 +366,7 @@ async function main() {
     console.log("✅ ReputationScore linked to ClaimPayout");
 
     // 5. Fund ClaimPayout
-    console.log("\n💰 Funding ClaimPayout with 500,000 MATIC...");
+    console.log("\n💰 Funding ClaimPayout with 500,000 SHM...");
     const fundTx = await claimPayout.fundContract({
         value: ethers.parseEther("500000")
     });
@@ -360,8 +394,14 @@ main()
 
 Run with:
 ```bash
-npx hardhat run scripts/deploy.js --network polygon_mumbai
+# For Shardeum Testnet
+npx hardhat run scripts/deploy.js --network shardeum
+
+# Or for local testing
+npx hardhat run scripts/deploy.js --network localhost
 ```
+
+**Note:** Contracts are already deployed on Shardeum Testnet. See contract addresses above.
 
 ---
 
@@ -400,7 +440,7 @@ describe("ParaCipher E2E Test", function() {
     it("Full flow: Buy coverage → File claim → Get payout", async function() {
         // 1. Worker buys coverage
         await insurancePolicy.connect(worker1).buyDailyCoverage({
-            value: ethers.parseEther("25")
+            value: ethers.parseEther("5")
         });
 
         // 2. Check coverage is active
@@ -449,7 +489,7 @@ const reputationScore = new ethers.Contract(REP_ADDRESS, REP_ABI, signer);
 async function buyCoverage() {
     try {
         const tx = await insurancePolicy.buyDailyCoverage({
-            value: ethers.parseEther("25")
+            value: ethers.parseEther("5")
         });
         await tx.wait();
         alert("Coverage purchased! You're covered for 24 hours.");
