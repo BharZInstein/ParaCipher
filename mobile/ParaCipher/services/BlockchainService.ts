@@ -125,7 +125,8 @@ export class InsurancePolicyService {
 export class ClaimPayoutService {
 
     /**
-     * File a new claim
+     * File a new claim WITH EVIDENCE
+     * For DEMO: Evidence is hardcoded, but contract validation is REAL
      */
     static async fileClaim(signer: ethers.Signer, accidentDescription: string) {
         try {
@@ -135,7 +136,31 @@ export class ClaimPayoutService {
                 signer
             );
 
-            const tx = await contract.fileClaim(accidentDescription);
+            // HARDCODED EVIDENCE FOR HACKATHON DEMO
+            // In production, this would come from:
+            // - Camera: accidentPhoto -> IPFS upload -> get hash
+            // - GPS: navigator.geolocation -> lat/lng
+            // - Timestamp: Date.now() when photo taken
+            // - Police Report: User input (optional)
+            // - Description: User input (required)
+
+            const demoEvidence = {
+                photoIpfsHash: "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG", // Valid IPFS hash
+                gpsLatitude: "13.0827",      // Chennai, India coordinates
+                gpsLongitude: "80.2707",     // Chennai, India coordinates
+                accidentTimestamp: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
+                policeReportId: `CHN-ACC-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+                description: accidentDescription.length >= 10
+                    ? accidentDescription
+                    : "Rear-ended by car at traffic signal on Mount Road. Minor damage to bumper and taillight. Driver fled scene."
+            };
+
+            console.log("[ClaimPayout] Filing claim with evidence:", demoEvidence);
+
+            const tx = await contract.fileClaim(
+                "Accident claim", // notes
+                demoEvidence      // evidence struct
+            );
 
             console.log("[ClaimPayout] File claim tx:", tx.hash);
             await tx.wait();
@@ -149,6 +174,7 @@ export class ClaimPayoutService {
             };
         }
     }
+
 
     /**
      * Check claim status for current user

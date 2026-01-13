@@ -74,7 +74,14 @@ export default function FileClaimScreen() {
                 <View style={styles.infoCard}>
                     <MaterialIcons name="info-outline" size={20} color={Colors.primary} />
                     <Text style={styles.infoText}>
-                        Describe what happened. Claims are reviewed and approved within 24 hours. You'll receive 150 SHM if approved.
+                        Claims are reviewed and approved within 24 hours. You'll receive 15 SHM if approved.
+                    </Text>
+                </View>
+
+                <View style={styles.demoNotice}>
+                    <MaterialIcons name="lightbulb-outline" size={18} color="#FFA500" />
+                    <Text style={styles.demoNoticeText}>
+                        DEMO MODE: Evidence (photo, GPS, timestamp) is pre-filled. In production, photos/GPS are captured automatically.
                     </Text>
                 </View>
 
@@ -149,6 +156,25 @@ const styles = StyleSheet.create({
         color: Colors.gray400,
         lineHeight: 18,
     },
+    demoNotice: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255, 165, 0, 0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 165, 0, 0.3)',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 24,
+        gap: 12,
+    },
+    demoNoticeText: {
+        flex: 1,
+        fontFamily: Typography.fontFamily.mono,
+        fontSize: 11,
+        color: '#FFA500',
+        lineHeight: 16,
+        fontWeight: '600',
+    },
+
     label: {
         fontFamily: Typography.fontFamily.mono,
         fontSize: 12,
