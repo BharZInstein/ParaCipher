@@ -552,21 +552,5 @@ async function loadDashboard() {
    - Daily automated safe day rewards
    - No manual admin intervention
 
----
 
-## 📞 Support
-
-For questions or issues:
-- GitHub Issues: [Your Repo]
-- Email: [Your Email]
-- Discord: [Your Discord]
-
----
-
-## 📄 License
-
-MIT License - Built for hackathon demo purposes
-
----
-
-**Happy Hacking! 🚀**
+Built by Team Cipher Labs
