@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import BinaryRain from "./components/BinaryRain";
+import { ConnectWallet } from "../components/ConnectWallet";
 
 export default function LandingPage() {
   const [activeWorkers, setActiveWorkers] = useState(14205);
@@ -59,11 +60,14 @@ export default function LandingPage() {
               <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[var(--accent-primary)] group-hover:w-full transition-all duration-300" />
             </a>
           </nav>
-          <Link href="/login">
-            <button className="btn-tech px-8 py-3 text-[10px] font-bold tracking-[0.15em] hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-all">
-              LAUNCH APP_
-            </button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <ConnectWallet />
+            <Link href="/login">
+              <button className="btn-tech px-8 py-3 text-[10px] font-bold tracking-[0.15em] hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-all">
+                LAUNCH APP_
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 

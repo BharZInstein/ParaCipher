@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { ConnectWallet } from "../../components/ConnectWallet";
 
 const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: "grid_view" },
@@ -63,6 +64,9 @@ export default function Sidebar() {
 
             {/* Footer Status */}
             <div className="p-4 border-t border-[var(--card-border)] bg-[var(--background-secondary)] text-[10px] text-[var(--text-secondary)]">
+                <div className="mb-4">
+                    <ConnectWallet />
+                </div>
                 <div className="flex justify-between items-center mb-2">
                     <span>CONNECTION</span>
                     <span className="text-[var(--accent-success)]">SECURE</span>

@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 };
 
 import Sidebar from "./components/Sidebar";
+import { MetaMaskProviderWrapper } from "../components/providers/MetaMaskProvider";
 
 export default function RootLayout({
   children,
@@ -43,10 +44,12 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased flex bg-[var(--background)] min-h-screen`}
       >
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          {children}
-        </div>
+        <MetaMaskProviderWrapper>
+          <Sidebar />
+          <div className="flex-1 flex flex-col min-w-0">
+            {children}
+          </div>
+        </MetaMaskProviderWrapper>
       </body>
     </html>
   );
