@@ -84,7 +84,7 @@ export default function LandingPage() {
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-[var(--foreground)] mb-8 leading-[0.9]">
             INSTANT INSURANCE
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-secondary)] to-[var(--foreground)] opacity-50">FOR GIG WORKERS</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[var(--foreground)] opacity-50">FOR GIG WORKERS</span>
           </h1>
 
           <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-16 leading-relaxed font-light">
