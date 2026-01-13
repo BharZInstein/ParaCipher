@@ -62,7 +62,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-4">
             <ConnectWallet />
-            <Link href="/login">
+            <Link href="/admin-login">
               <button className="btn-tech px-8 py-3 text-[10px] font-bold tracking-[0.15em] hover:bg-[var(--foreground)] hover:text-[var(--background)] transition-all">
                 LAUNCH APP_
               </button>
@@ -84,7 +84,7 @@ export default function LandingPage() {
           <h1 className="text-5xl md:text-8xl font-black tracking-tighter text-[var(--foreground)] mb-8 leading-[0.9]">
             INSTANT INSURANCE
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-secondary)] to-[var(--foreground)] opacity-50">FOR GIG WORKERS</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[var(--foreground)] opacity-50">FOR GIG WORKERS</span>
           </h1>
 
           <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-16 leading-relaxed font-light">
@@ -95,16 +95,26 @@ export default function LandingPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-            <Link href="/login">
+            <Link href="/admin-login">
               <button className="group relative btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] bg-[var(--foreground)] text-[var(--background)] hover:bg-transparent hover:text-[var(--foreground)] border border-[var(--foreground)] overflow-hidden">
                 <span className="relative z-10 group-hover:translate-x-1 transition-transform inline-block">DEPLOY POLICY</span>
                 <span className="ml-2 relative z-10 group-hover:translate-x-2 transition-transform inline-block">→</span>
                 <div className="absolute inset-0 bg-[var(--background)] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out z-0" />
               </button>
             </Link>
-            <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://explorer-mezame.shardeum.org/address/0x3A84E06554876A557b16249619247eF765C35407" target="_blank" rel="noopener noreferrer">
               <button className="btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] text-[var(--text-secondary)] border-[var(--card-border)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]">
-                VIEW CONTRACTS
+                VIEW InsurancePolicy Contract
+              </button>
+            </a>
+            <a href="https://explorer-mezame.shardeum.org/address/0xf678B23d7887d9c9dbc49C2170902d5c88075c2D" target="_blank" rel="noopener noreferrer">
+              <button className="btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] text-[var(--text-secondary)] border-[var(--card-border)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]">
+                VIEW ClaimPayout Contract
+              </button>
+            </a>
+            <a href="https://explorer-mezame.shardeum.org/address/0x199678E7AF0B7a9f62523563f9eF861e242e944A" target="_blank" rel="noopener noreferrer">
+              <button className="btn-tech h-16 px-12 text-xs font-bold tracking-[0.2em] text-[var(--text-secondary)] border-[var(--card-border)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]">
+                VIEW ReputationScore Contract
               </button>
             </a>
           </div>

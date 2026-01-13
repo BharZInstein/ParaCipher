@@ -38,7 +38,7 @@ export default function SmartContractStatus() {
           <div className="tech-border p-4 corner-accent bg-[var(--background)]">
             <span className="text-[10px] text-[var(--text-secondary)] tracking-widest">NETWORK</span>
             <div className="mt-2 flex justify-between items-end">
-              <span className="text-xl font-bold text-[var(--accent-primary)]">POLYGON PoS</span>
+              <span className="text-xl font-bold text-[var(--accent-primary)]">Shardeum</span>
               <span className="text-xs text-[var(--text-secondary)]">Heimdall: OK</span>
             </div>
           </div>

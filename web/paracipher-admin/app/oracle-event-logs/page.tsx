@@ -92,7 +92,7 @@ export default function OracleEventLogs() {
             <span className="text-[10px] text-[var(--text-secondary)] tracking-widest">AVG CONFIRMATION</span>
             <div className="mt-2 flex items-baseline gap-2">
               <h2 className="text-2xl font-bold text-[var(--accent-secondary)]">1.2s</h2>
-              <span className="text-xs text-[var(--accent-success)]">POLYGON PoS</span>
+              <span className="text-xs text-[var(--accent-success)]">Shardeum PoS</span>
             </div>
           </div>
         </div>

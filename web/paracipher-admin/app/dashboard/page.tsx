@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Types
 interface Driver {
@@ -53,8 +54,17 @@ const generateLogEntry = (id: number): LogEntry => {
 };
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, walletAddress } = useAuth();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Authentication guard - redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/admin-login");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
     setLogs(Array.from({ length: 8 }, (_, i) => generateLogEntry(i + 1)));
@@ -68,6 +78,23 @@ export default function Dashboard() {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center font-mono">
+        <div className="flex items-center gap-3 text-[var(--accent-primary)]">
+          <span className="w-4 h-4 border-2 border-[var(--accent-primary)]/30 border-t-[var(--accent-primary)] rounded-full animate-spin" />
+          <span className="text-sm tracking-widest">AUTHENTICATING...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col font-mono text-xs relative overflow-hidden">
@@ -84,7 +111,7 @@ export default function Dashboard() {
         <div className="max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="relative w-40 h-10">
-                        <h1 className="text-xl font-bold tracking-widest text-[var(--foreground)]">DASHBOARD</h1>
+              <h1 className="text-xl font-bold tracking-widest text-[var(--foreground)]">DASHBOARD</h1>
 
             </div>
             <span className="text-lg font-bold tracking-widest text-[var(--foreground)] hidden">
@@ -103,7 +130,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-2 px-3 py-1 border border-[var(--accent-success)]/30 bg-[var(--accent-success)]/5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-success)] animate-pulse" />
-              <span className="text-[10px] font-bold text-[var(--accent-success)] tracking-widest">POLYGON MAINNET</span>
+              <span className="text-[10px] font-bold text-[var(--accent-success)] tracking-widest">SHARDEUM Testnet</span>
             </div>
           </div>
         </div>
@@ -171,7 +198,6 @@ export default function Dashboard() {
                 <thead>
                   <tr className="border-b border-[var(--card-border)] text-[var(--text-secondary)] bg-[var(--background)]/50">
                     <th className="p-4 font-normal tracking-widest text-[9px]">ID_REFERENCE</th>
-                    <th className="p-4 font-normal tracking-widest text-[9px]">DRIVER_IDENTITY</th>
                     <th className="p-4 font-normal tracking-widest text-[9px]">CURRENT_STATUS</th>
                     <th className="p-4 font-normal tracking-widest text-[9px]">GEOLOCATION</th>
                     <th className="p-4 font-normal tracking-widest text-[9px]">LAST_PING</th>
@@ -182,7 +208,7 @@ export default function Dashboard() {
                   {mockDrivers.map((d) => (
                     <tr key={d.id} className="hover:bg-[var(--card-hover)] transition-colors group">
                       <td className="p-4 font-bold text-[var(--accent-primary)] font-mono">{d.id}</td>
-                      <td className="p-4 font-bold">{d.name}</td>
+                      
                       <td className="p-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-bold tracking-wider uppercase border ${d.status === 'active' ? 'border-[var(--accent-success)]/30 bg-[var(--accent-success)]/5 text-[var(--accent-success)]' :
                           d.status === 'idle' ? 'border-[var(--accent-secondary)]/30 bg-[var(--accent-secondary)]/5 text-[var(--accent-secondary)]' :

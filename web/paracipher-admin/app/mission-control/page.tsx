@@ -49,7 +49,7 @@ export default function MissionControl() {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-[var(--accent-success)] border border-[var(--accent-success)] px-3 py-1 bg-[var(--accent-success)]/10">
-            POLYGON NETWORK: LIVE
+            SHARDEUM Testnet: LIVE
           </span>
         </div>
       </header>

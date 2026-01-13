@@ -52,7 +52,7 @@ export default function Treasury() {
                 </div>
                 <div className="flex items-center gap-4">
                     <span className="text-xs text-[var(--accent-primary)] border border-[var(--accent-primary)] px-3 py-1 bg-[var(--accent-primary)]/10">
-                        POLYGON MAINNET
+                        Shardeum Testnet
                     </span>
                 </div>
             </header>
