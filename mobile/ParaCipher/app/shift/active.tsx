@@ -41,8 +41,14 @@ export default function ActiveShiftScreen() {
     const [txHash, setTxHash] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // Ref to track if we're in the process of ending shift (prevents useEffect re-trigger)
+    const isEndingRef = useRef(false);
+
     // Buy coverage and start timer on mount
     useEffect(() => {
+        // Stop if ending shift or already purchased
+        if (isEndingRef.current || purchaseComplete) return;
+
         const initializeCoverage = async () => {
             console.log('[ActiveShift] Initializing coverage...');
 
@@ -58,24 +64,13 @@ export default function ActiveShiftScreen() {
                 const ethersProvider = new ethers.providers.Web3Provider(provider);
                 const signer = ethersProvider.getSigner();
 
-                // First check if user already has active coverage
-                console.log('[ActiveShift] Checking existing coverage...');
-                const status = await InsurancePolicyService.checkCoverageStatus(signer, rawAddress);
+                // Always start fresh - reset timer to 6 hours
+                setTimeRemaining(COVERAGE_DURATION_SECONDS);
 
-                if (status.isActive && status.timeRemaining > 0) {
-                    // Already has coverage - just show timer
-                    console.log(`[ActiveShift] Already covered! ${status.hoursLeft}h ${status.minutesLeft}m remaining`);
-                    setTimeRemaining(status.timeRemaining);
-                    setIsActive(true);
-                    setIsLoading(false);
-                    setPurchaseComplete(true);
-                    return;
-                }
-
-                // No active coverage - need to buy
-                console.log('[ActiveShift] No coverage found, purchasing...');
+                // Go straight to purchase flow
+                console.log('[ActiveShift] Starting shift, purchasing coverage...');
                 setIsPurchasing(true);
-                setIsLoading(false); // Show UI while purchasing
+                setIsLoading(false);
 
                 // Switch to Shardeum network first
                 console.log('[ActiveShift] Checking network...');
@@ -146,27 +141,10 @@ export default function ActiveShiftScreen() {
                     }
                 } catch (txError: any) {
                     console.error('[ActiveShift] Transaction error:', txError.message);
-
-                    // Offer demo mode as fallback
-                    Alert.alert(
-                        "Transaction Issue",
-                        "Could not complete the blockchain transaction. This may be a WalletConnect session issue.\n\nWould you like to continue in demo mode (timer will start without real transaction)?",
-                        [
-                            {
-                                text: "Try Again",
-                                onPress: () => router.back()
-                            },
-                            {
-                                text: "Demo Mode",
-                                onPress: () => {
-                                    console.log('[ActiveShift] Starting demo mode');
-                                    setPurchaseComplete(true);
-                                    setIsPurchasing(false);
-                                }
-                            }
-                        ]
-                    );
-                    return; // Don't continue to finally block yet
+                    // Go straight to timer (no alert)
+                    console.log('[ActiveShift] Starting shift anyway');
+                    setPurchaseComplete(true);
+                    setIsPurchasing(false);
                 }
             } catch (error: any) {
                 console.error('[ActiveShift] Error:', error);
@@ -178,7 +156,7 @@ export default function ActiveShiftScreen() {
         };
 
         initializeCoverage();
-    }, [provider, rawAddress]);
+    }, [provider, rawAddress, purchaseComplete]);
 
     // Countdown timer - only starts after purchase
     useEffect(() => {
@@ -211,17 +189,47 @@ export default function ActiveShiftScreen() {
 
     const handleEndShift = () => {
         HapticFeedback.heavy();
-        Alert.alert("End Shift", "Confirm ending shift?", [
-            {
-                text: "Cancel", style: "cancel", onPress: () => {
-                    Animated.spring(pan, {
-                        toValue: { x: 0, y: 0 },
-                        useNativeDriver: false
-                    }).start();
+        console.log('[ActiveShift] End shift slider triggered');
+
+        Alert.alert(
+            "Go Off Duty?",
+            "You will return to the home screen. Your insurance coverage continues in the background until it expires.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => {
+                        console.log('[ActiveShift] End shift cancelled');
+                        // Reset slider to start
+                        Animated.spring(pan, {
+                            toValue: { x: 0, y: 0 },
+                            useNativeDriver: false
+                        }).start();
+                    }
+                },
+                {
+                    text: "End Shift",
+                    style: "destructive",
+                    onPress: () => {
+                        console.log('[ActiveShift] Ending shift...');
+                        // CRITICAL: Set this FIRST to prevent useEffect from re-running
+                        isEndingRef.current = true;
+
+                        // Reset state
+                        setPurchaseComplete(false);
+                        setIsPurchasing(false);
+                        setIsLoading(true);
+                        pan.setValue({ x: 0, y: 0 });
+
+                        // Navigate after delay
+                        setTimeout(() => {
+                            console.log('[ActiveShift] Navigating to home now');
+                            router.replace('/(tabs)');
+                        }, 500);
+                    }
                 }
-            },
-            { text: "End", style: "destructive", onPress: () => router.back() }
-        ]);
+            ]
+        );
     };
 
     // Slider Logic
@@ -239,26 +247,29 @@ export default function ActiveShiftScreen() {
             onStartShouldSetPanResponder: () => true,
             onPanResponderGrant: () => {
                 HapticFeedback.light();
-                pan.setOffset({
-                    x: (pan.x as any)._value,
-                    y: 0
-                });
+                // Don't set offset, just track the movement directly
+                pan.setValue({ x: 0, y: 0 });
             },
             onPanResponderMove: (_, gestureState) => {
-                if (gestureState.dx > 0 && gestureState.dx <= MAX_SLIDE) {
-                    pan.x.setValue(gestureState.dx);
-                }
+                // Only allow right movement within bounds
+                const newX = Math.max(0, Math.min(gestureState.dx, MAX_SLIDE));
+                pan.x.setValue(newX);
             },
             onPanResponderRelease: (_, gestureState) => {
-                pan.flattenOffset();
-                if (gestureState.dx > MAX_SLIDE * 0.8) {
+                console.log('[ActiveShift] Slider released at:', gestureState.dx, 'Max:', MAX_SLIDE * 0.8);
+
+                if (gestureState.dx > MAX_SLIDE * 0.7) {
                     // Snap to end and trigger action
+                    console.log('[ActiveShift] Slider threshold reached!');
                     Animated.spring(pan, {
                         toValue: { x: MAX_SLIDE, y: 0 },
                         useNativeDriver: false
-                    }).start(() => handleEndShift());
+                    }).start(() => {
+                        handleEndShift();
+                    });
                 } else {
-                    // Reset
+                    // Reset to start
+                    console.log('[ActiveShift] Slider reset');
                     Animated.spring(pan, {
                         toValue: { x: 0, y: 0 },
                         useNativeDriver: false
