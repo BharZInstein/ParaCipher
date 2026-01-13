@@ -1,0 +1,431 @@
+{
+  "info": {
+    "name": "ParaCipher MVP Backend",
+    "description": "Complete API collection for ParaCipher instant insurance backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"0xMOCKWALLET\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/auth/logout?token=mock-jwt-token",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["auth", "logout"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "mock-jwt-token"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "item": [
+        {
+          "name": "Complete Onboarding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kycStatus\": \"verified\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/onboarding/complete",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["onboarding", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Get Onboarding Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/onboarding/status",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["onboarding", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get Wallet Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/wallet",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["wallet"]
+            }
+          }
+        },
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/wallet/balance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["wallet", "balance"]
+            }
+          }
+        },
+        {
+          "name": "Fund Wallet",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/wallet/fund?amount=500",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["wallet", "fund"],
+              "query": [
+                {
+                  "key": "amount",
+                  "value": "500"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policies",
+      "item": [
+        {
+          "name": "Purchase Coverage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"durationHours\": 8\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/policy/purchase",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["policy", "purchase"]
+            }
+          }
+        },
+        {
+          "name": "Get All Policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/policy",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["policy"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Policy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/policy/active/current",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["policy", "active", "current"]
+            }
+          }
+        },
+        {
+          "name": "Get Policy by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/policy/policy_123",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["policy", "policy_123"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Simulate Claim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Speed detection during shift\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/claims/simulate",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["claims", "simulate"]
+            }
+          }
+        },
+        {
+          "name": "Get All Claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/claims",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["claims"]
+            }
+          }
+        },
+        {
+          "name": "Get Claim by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/claims/claim_123",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["claims", "claim_123"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "History & Transactions",
+      "item": [
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/history",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["history"]
+            }
+          }
+        },
+        {
+          "name": "Get Premium Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/history?filter=premium",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "filter",
+                  "value": "premium"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Claim Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/history?filter=claim",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "filter",
+                  "value": "claim"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/history/type/premium",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["history", "type", "premium"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Safety Passport (Reputation)",
+      "item": [
+        {
+          "name": "Get Reputation Score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/reputation",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["reputation"]
+            }
+          }
+        },
+        {
+          "name": "Update Reputation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/reputation/update",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["reputation", "update"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings & Health",
+      "item": [
+        {
+          "name": "Get Home Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/home",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "home"]
+            }
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "Reset Demo State",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/settings/reset",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "settings", "reset"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

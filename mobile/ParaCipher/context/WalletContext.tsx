@@ -43,7 +43,7 @@ const providerMetadata = {
 };
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
-    const { open, isConnected: isWCConnected, address: wcAddress, provider: wcProvider } = useWalletConnectModal();
+    const { open, close, isConnected: isWCConnected, address: wcAddress, provider: wcProvider } = useWalletConnectModal();
     const [balance, setBalance] = useState('0.00');
     const [formattedAddress, setFormattedAddress] = useState<string | null>(null);
     const [chainId, setChainId] = useState<number | null>(null);
@@ -198,18 +198,49 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const disconnectWallet = async () => {
         try {
             console.log('[WalletContext] Disconnecting wallet...');
-            // WalletConnect disconnect is handled by the modal
-            // Just reset local state
+
+            // Disconnect the WalletConnect provider session
+            if (wcProvider) {
+                try {
+                    // Try to disconnect the provider (ends the WC session)
+                    if (wcProvider.disconnect) {
+                        await wcProvider.disconnect();
+                        console.log('[WalletContext] Provider disconnected');
+                    }
+                } catch (providerError) {
+                    console.log('[WalletContext] Provider disconnect error (non-fatal):', providerError);
+                }
+            }
+
+            // Close the WalletConnect modal session
+            if (close) {
+                try {
+                    await close();
+                    console.log('[WalletContext] Modal session closed');
+                } catch (closeError) {
+                    console.log('[WalletContext] Close error (non-fatal):', closeError);
+                }
+            }
+
+            // Reset local state
             setFormattedAddress(null);
             setBalance('0.00');
+            setChainId(null);
             await SecureStore.deleteItemAsync('wallet_address').catch(() => { });
-            console.log('[WalletContext] Wallet disconnected');
+
+            console.log('[WalletContext] Wallet fully disconnected');
+            Alert.alert(
+                "Disconnected",
+                "Wallet disconnected. Please reconnect to continue.",
+                [{ text: "OK" }]
+            );
         } catch (error) {
             console.error('[WalletContext] Disconnect error:', error);
+            // Still reset state even on error
+            setFormattedAddress(null);
+            setBalance('0.00');
+            setChainId(null);
         }
-        await SecureStore.deleteItemAsync('wallet_address');
-        setBalance('0.00');
-        setChainId(null);
     };
 
     const switchNetwork = async (targetChainId: number) => {

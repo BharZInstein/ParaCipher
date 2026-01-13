@@ -6,11 +6,13 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "node": "hardhat node",
     "deploy:local": "hardhat run scripts/deploy.js --network localhost",
     "deploy:mumbai": "hardhat run scripts/deploy.js --network polygon_mumbai",
     "deploy:shardeum": "hardhat run scripts/deploy.js --network shardeum",
     "test-flow:local": "hardhat run scripts/test-flow.js --network localhost",
-    "node": "hardhat node"
+    "local": "hardhat node --hostname 0.0.0.0",
+    "local:deploy": "FUNDING_AMOUNT=100 hardhat run scripts/deploy.js --network localhost"
   },
   "keywords": [
     "insurance",
